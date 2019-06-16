@@ -1,0 +1,27 @@
+<?xml version="1.0"?>
+<package>
+    <name>pybullet_ros</name>
+    <version>1.0.0</version>
+    <description>
+        ROS wrapper for pybullet simulator
+    </description>
+
+    <license>GPLv3</license>
+
+    <author email="olima@dfki.de">Oscar Lima</author>
+    <maintainer email="olima@dfki.de">Oscar Lima</maintainer>
+
+    <buildtool_depend>catkin</buildtool_depend>
+
+    <build_depend>std_msgs</build_depend>
+    <build_depend>message_generation</build_depend>
+    <build_depend>genmsg</build_depend>
+    <build_depend>genmsg</build_depend>
+    
+
+    <run_depend>std_msgs</run_depend>
+    <run_depend>message_generation</run_depend>
+    <run_depend>genmsg</run_depend>
+    <run_depend>message_runtime</run_depend>
+
+</package>
