@@ -1,0 +1,295 @@
+#!/usr/bin/env python
+
+import rospy
+import random
+import wx
+import wx.lib.newevent
+import xml.dom.minidom
+from sensor_msgs.msg import JointState
+from math import pi
+from threading import Thread
+from std_msgs.msg import Float64
+
+RANGE = 10000
+
+def get_param(name, value=None):
+    private = "~%s" % name
+    if rospy.has_param(private):
+        return rospy.get_param(private)
+    elif rospy.has_param(name):
+        return rospy.get_param(name)
+    else:
+        return value
+
+class JointStatePublisher():
+    def __init__(self):
+        description = get_param('robot_description')
+        robot = xml.dom.minidom.parseString(description).getElementsByTagName('robot')[0]
+        self.free_joints = {}
+        self.joint_list = [] # for maintaining the original order of the joints
+        self.dependent_joints = get_param("dependent_joints", {})
+        use_mimic = get_param('use_mimic_tags', True)
+        use_small = get_param('use_smallest_joint_limits', True)
+
+        self.zeros = get_param("zeros")
+
+        pub_def_positions = get_param("publish_default_positions", True)
+
+        # HACK: ignore this joints, do not publish
+        self.ignore_joint_list = ['front_left_wheel', 'front_right_wheel', 'rear_left_wheel', 'rear_right_wheel']
+
+        # Find all non-fixed joints
+        for child in robot.childNodes:
+            if child.nodeType is child.TEXT_NODE:
+                continue
+            if child.localName == 'joint':
+                jtype = child.getAttribute('type')
+                if jtype == 'fixed' or jtype == 'floating':
+                    continue
+                name = child.getAttribute('name')
+                # append only if joint is not mimic
+                mimic_tags = child.getElementsByTagName('mimic')
+                if mimic_tags == []:
+                    # not a mimic joint: add to list
+
+                    # check if joint is in ignore list
+                    if name not in self.ignore_joint_list:
+                        self.joint_list.append(name)
+                    else:
+                        rospy.loginfo(str(name) + ' joint will be ignored because it belongs to the harcoded ignore list!')
+                else:
+                    rospy.loginfo(str(name) + ' mimic joint detected, skip')
+
+                if jtype == 'continuous':
+                    minval = -pi
+                    maxval = pi
+                else:
+                    try:
+                        limit = child.getElementsByTagName('limit')[0]
+                        minval = float(limit.getAttribute('lower'))
+                        maxval = float(limit.getAttribute('upper'))
+                    except:
+                        rospy.logwarn("%s is not fixed, nor continuous, but limits are not specified!" % name)
+                        continue
+
+                safety_tags = child.getElementsByTagName('safety_controller')
+                if use_small and len(safety_tags)==1:
+                    tag = safety_tags[0]
+                    if tag.hasAttribute('soft_lower_limit'):
+                        minval = max(minval, float(tag.getAttribute('soft_lower_limit')))
+                    if tag.hasAttribute('soft_upper_limit'):
+                        maxval = min(maxval, float(tag.getAttribute('soft_upper_limit')))
+
+                if name in self.dependent_joints:
+                    continue
+
+                if self.zeros and name in self.zeros:
+                    zeroval = self.zeros[name]
+                elif minval > 0 or maxval < 0:
+                    zeroval = (maxval + minval)/2
+                else:
+                    zeroval = 0
+
+                joint = {'min':minval, 'max':maxval, 'zero':zeroval}
+                if pub_def_positions:
+                    joint['position'] = zeroval
+
+                self.free_joints[name] = joint
+
+        # subscribe to joint states to initialize gui slides one time only
+        self.joint_state_msg = None
+        sub_once = rospy.Subscriber("/joint_states", JointState, self.jointStatesCallback, queue_size=1)
+        
+        # wait until msg arrives
+        rospy.loginfo('waiting for /joint_states topic (one time only to initialize arm with current values)')
+        self.joint_state_msg_received = False
+        while not rospy.is_shutdown():
+            rospy.sleep(0.1)
+            if self.joint_state_msg_received:
+                rospy.loginfo('joint state message received, proceed...')
+                break
+        
+        # construct arm state dictionary for gui initialization purposes
+        
+        # init empty arm states dictionary to store current arm joint angles
+        self.arm_state = {}
+        for joint_name in self.joint_list:
+            # find joint_name value in received joint states msg
+
+            # find index inside /joint_states msg that matches with desired joint
+            joint_index = self.joint_state_msg.name.index(joint_name)
+
+            # append found value to arm values dictionary
+            self.arm_state [joint_name] = self.joint_state_msg.position[joint_index]
+
+        rospy.loginfo('arm joint values are:' + str(self.arm_state))
+
+        #shutdown subcriber
+        sub_once.unregister()
+
+        # create one publisher per available joint HACK!
+        self.publishers = []
+        rospy.loginfo('hacked joint state publisher will actuate joints in the following topics:')
+        for i, joint_name in enumerate(self.joint_list):
+            rospy.loginfo(joint_name + '_position_controller/command')
+            self.publishers.append(rospy.Publisher(joint_name + '_position_controller/command', Float64, queue_size=1))
+
+        # initialize gui slide interface
+        self.app = wx.App()
+        self.gui = JointStatePublisherGui("Joint State Publisher", self)
+        self.gui.Show()
+
+
+    def jointStatesCallback(self, msg):
+        self.joint_state_msg_received = True
+        self.joint_state_msg = msg
+
+
+    def loop(self):
+        hz = get_param("rate", 10) # 10hz
+        r = rospy.Rate(hz)
+
+        # Publish Joint States (not anymore! HACK)
+        while not rospy.is_shutdown():
+            for i, name in enumerate(self.joint_list):
+                # publish gui status bar as float command msg
+                self.publishers[i].publish(Float64(self.free_joints[name]['position']))
+
+            r.sleep()
+
+class JointStatePublisherGui(wx.Frame):
+    def __init__(self, title, jsp):
+        wx.Frame.__init__(self, None, -1, title, (-1, -1));
+        self.jsp = jsp
+        self.joint_map = {}
+        panel = wx.ScrolledWindow(self, wx.ID_ANY, style= wx.VSCROLL);
+        box = wx.BoxSizer(wx.VERTICAL)
+        font = wx.Font(9, wx.SWISS, wx.NORMAL, wx.BOLD)
+
+        ### Sliders ###
+        for name in self.jsp.joint_list:
+            if name not in self.jsp.free_joints:
+                continue
+            joint = self.jsp.free_joints[name]
+
+            if joint['min'] == joint['max']:
+                continue
+
+            row = wx.GridSizer(1,2)
+            label = wx.StaticText(panel, -1, name)
+            label.SetFont(font)
+            row.Add(label, 1, wx.ALIGN_CENTER_VERTICAL)
+
+            display = wx.TextCtrl (panel, value=str(0),
+                        style=wx.TE_READONLY | wx.ALIGN_RIGHT)
+
+            row.Add(display, flag= wx.ALIGN_RIGHT| wx.ALIGN_CENTER_VERTICAL)
+            box.Add(row, 1, wx.EXPAND)
+            slider = wx.Slider(panel, -1, RANGE/2, 0, RANGE,
+                        style= wx.SL_AUTOTICKS | wx.SL_HORIZONTAL)
+            slider.SetFont(font)
+            box.Add(slider, 1, wx.EXPAND)
+
+            self.joint_map[name] = {'slidervalue':0, 'display':display,
+                                    'slider':slider, 'joint':joint}
+
+        self.UpdateSlidersEvent, self.EVT_UPDATESLIDERS = wx.lib.newevent.NewEvent()
+        self.Bind(self.EVT_UPDATESLIDERS, self.updateSliders)
+
+        ### Buttons ###
+        self.randbutton = wx.Button(panel, 1, 'Randomize')
+        self.ctrbutton = wx.Button(panel, 2, 'Center')
+        self.Bind(wx.EVT_SLIDER, self.sliderUpdate)
+
+        wx.EVT_BUTTON(self, 1, self.randomize_event)
+        wx.EVT_BUTTON(self, 2, self.center_event)
+
+        box.Add(self.randbutton, 0, wx.EXPAND)
+        box.Add(self.ctrbutton, 1, wx.EXPAND)
+
+        panel.SetSizer(box)
+        # self.center()
+        self.set_slides_to_values(self.jsp.arm_state)
+        
+        box.Fit(self)
+        panel.SetScrollRate(0,slider.GetSize().GetHeight()+row.GetSize().GetHeight())
+        self.update_values()
+
+
+    def update_values(self):
+        for (name,joint_info) in self.joint_map.items():
+            purevalue = joint_info['slidervalue']
+            joint = joint_info['joint']
+            value = self.sliderToValue(purevalue, joint)
+            joint['position'] = value
+        self.update_sliders()
+
+    def updateSliders(self, event):
+        self.update_sliders()
+
+    def update_sliders(self):
+        for (name,joint_info) in self.joint_map.items():
+            joint = joint_info['joint']
+            joint_info['slidervalue'] = self.valueToSlider(joint['position'],
+                                                           joint)
+            joint_info['slider'].SetValue(joint_info['slidervalue'])
+            joint_info['display'].SetValue("%.2f"%joint['position'])
+
+    def center_event(self, event):
+        self.center()
+
+    def center(self):
+        rospy.loginfo("Sending all joints to zero!")
+        for (name,joint_info) in self.joint_map.items():
+            joint = joint_info['joint']
+            joint_info['slidervalue'] = self.valueToSlider(joint['zero'], joint)
+        self.update_values()
+
+    def set_slides_to_values(self, arm_state):
+        '''
+        Set gui slides to values listened from joint_states to slides (one time only at startup)
+        e.g. arm_state = {'joint0' : 1.3, 'joint2' : 3.4}
+        '''
+        for (name, joint_info) in self.joint_map.items():
+            joint = joint_info['joint']
+            # open gripper always
+            if name != 'left_arm_gripper_joint':
+                joint_info['slidervalue'] = self.valueToSlider(arm_state[name], joint)
+            else:
+                rospy.logwarn('WARNING: setting gripper to harcoded value of -1.5 to open it, this behavior is desired... just to make you aware...')
+                joint_info['slidervalue'] = self.valueToSlider(-1.5, joint)
+        self.update_values()
+
+    def randomize_event(self, event):
+        self.randomize()
+
+    def randomize(self):
+        rospy.loginfo("Randomizing")
+        for (name,joint_info) in self.joint_map.items():
+            joint = joint_info['joint']
+            joint_info['slidervalue'] = self.valueToSlider(random.uniform(joint['min'], joint['max']), joint)
+        self.update_values()
+
+
+    def sliderUpdate(self, event):
+        for (name,joint_info) in self.joint_map.items():
+            joint_info['slidervalue'] = joint_info['slider'].GetValue()
+        self.update_values()
+
+    def valueToSlider(self, value, joint):
+        return (value - joint['min']) * float(RANGE) / (joint['max'] - joint['min'])
+
+    def sliderToValue(self, slider, joint):
+        pctvalue = slider / float(RANGE)
+        return joint['min'] + (joint['max']-joint['min']) * pctvalue
+
+
+if __name__ == '__main__':
+    try:
+        rospy.init_node('hacked_joint_state_publisher')
+        jsp = JointStatePublisher()
+
+        Thread(target=jsp.loop).start()
+        jsp.app.MainLoop()
+
+    except rospy.ROSInterruptException: pass

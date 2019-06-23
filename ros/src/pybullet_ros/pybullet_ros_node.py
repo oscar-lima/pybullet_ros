@@ -1,5 +1,7 @@
 #!/usr/bin/env python3
 
+import sys
+import math
 import rospy
 import pybullet as pb
 import pybullet_data
@@ -7,6 +9,35 @@ import pybullet_data
 from std_msgs.msg import String, Float64
 from std_srvs.srv import Empty
 from sensor_msgs.msg import JointState
+
+class positionControl(object):
+    '''
+    helper class to receive position control commands
+    '''
+    def __init__(self, joint_index, joint_name):
+        rospy.Subscriber(joint_name + '_position_controller/command', Float64, self.position_controlCB, queue_size=1)
+        self.cmd = None
+        self.data_available = False
+        self.joint_index_ = joint_index
+        self.joint_name_ = joint_name
+
+    def position_controlCB(self, msg):
+        self.data_available = True
+        self.cmd = msg.data
+
+    def get_cmd(self):
+        self.data_available = False
+        return self.cmd
+
+    def is_data_available(self):
+        return self.data_available
+
+    def get_joint_name(self):
+        return self.joint_name_
+
+    def get_joint_index(self):
+        return self.joint_index_
+
 
 class pyBulletRosWrapper(object):
     '''
@@ -17,16 +48,15 @@ class pyBulletRosWrapper(object):
         # setup publishers
         self.pub_test = rospy.Publisher('~test_publisher', String, queue_size=1)
         self.pub_joint_states = rospy.Publisher('/joint_states', JointState, queue_size=1)
-        # setup subscribers
-        # rospy.Subscriber("~test_subscriber", String, self.emotionCallback, queue_size=1)
-        rospy.Subscriber("~position_control/command", Float64, self.position_controlCB, queue_size=1)
         # get from param server the frequency at which to run the simulation
         self.loop_rate = rospy.Rate(rospy.get_param('~loop_rate', 10.0))
         # query from param server if gui is needed
-        is_gui_needed = rospy.get_param('~pybullet_gui', False) # TODO: change to True by default
+        is_gui_needed = rospy.get_param('~pybullet_gui', True)
         # get from param server the initial URDF robot to load in environment
-        #urdf_path = rospy.get_param('~robot_urdf_path', '/home/oscar/ros_ws/esterel_online_ws/src/pybullet_ros/ros/test/urdf/kr210l150.urdf')
-        urdf_path = rospy.get_param('~robot_urdf_path_hack', '/home/oscar/repos_cloned/kuka_experimental/kuka_kr210_support/urdf/kr210l150.urdf')
+        urdf_path = rospy.get_param('~robot_urdf_path', None)
+        if(urdf_path == None):
+            rospy.logerr('mandatory param robot_urdf_path not set, will exit now')
+            sys.exit()
         # get from param server if user wants to pause simulation at startup
         self.pause_simulation = rospy.get_param('~pause_simulation', False)
         # start gui
@@ -49,10 +79,19 @@ class pyBulletRosWrapper(object):
         plane = pb.loadURDF('plane.urdf')
         # do not pause simulation at startup
         self.pause_simulation = False
-        # get the number of joints in the robot
-        self.numj = pb.getNumJoints(self.robot)
         # get joints names and store them in dictionary
         self.joint_index_name_dictionary = self.get_joint_names()
+        self.numj = len(self.joint_index_name_dictionary)
+        # remove
+        rospy.loginfo('number of joints : %d', self.numj)
+        rospy.loginfo('joint_index_name_dictionary : %s', self.joint_index_name_dictionary)
+        # setup subscribers
+        self.pc_subscribers = []
+        # joint position control command individual subscribers
+        for joint_index in self.joint_index_name_dictionary:
+            joint_name = self.joint_index_name_dictionary[joint_index]
+            # create position control object
+            self.pc_subscribers.append(positionControl(joint_index, joint_name))
 
     def handle_reset_simulation(self, req):
         '''
@@ -84,21 +123,25 @@ class pyBulletRosWrapper(object):
         joint id's -> joint names. Return the dictionary
         '''
         joint_index_name_dictionary = {}
-        for joint_index in range(0, self.numj):
+        for joint_index in range(0, pb.getNumJoints(self.robot)):
             info = pb.getJointInfo(self.robot, joint_index)
             # ensure we are dealing with a revolute joint
             if info[2] == 0: # 0 -> 'JOINT_REVOLUTE'
                 # insert key, value in dictionary (joint index, joint name)
-                joint_index_name_dictionary[joint_index] = info[1].decode("utf-8") # info[1] refers to joint name
+                joint_index_name_dictionary[joint_index] = info[1].decode('utf-8') # info[1] refers to joint name
         return joint_index_name_dictionary
 
-    def position_controlCB(self):
+    def position_ctrl_cmd(self):
         '''
-        TODO: this is work under progress
-        callback to handle a position control command
         '''
-        pass
-        # pb.setJointMotorControlArray(self.robot, range(self.numj), pb.POSITION_CONTROL, targetPositions=[0.1] * self.numj)
+        joint_indices = []
+        joint_commands = []
+        for subscriber in self.pc_subscribers:
+            if subscriber.is_data_available():
+                joint_indices.append(subscriber.get_joint_index())
+                joint_commands.append(subscriber.get_cmd())
+        # send commands to pybullet
+        pb.setJointMotorControlArray(self.robot, joint_indices, pb.POSITION_CONTROL, joint_commands)
 
     def handle_reset_simulation(self, req):
         '''
@@ -131,16 +174,17 @@ class pyBulletRosWrapper(object):
         # setup msg placeholder
         joint_msg = JointState()
         # get joint states
-        for joint_index in range(0, self.numj):
+        for joint_index in self.joint_index_name_dictionary:
+            # get joint state from pybullet
             joint_state = pb.getJointState(self.robot, joint_index)
-            # if dictionary contains key, skip otherwise
-            if joint_index in self.joint_index_name_dictionary:
-                # fill msg
-                joint_msg.name.append(self.joint_index_name_dictionary[joint_index])
-                joint_msg.position.append(joint_state[0])
-                joint_msg.velocity.append(joint_state[1])
-                joint_msg.effort.append(joint_state[3]) # applied torque in last sim step
-        # publish joint states
+            # fill msg
+            joint_msg.name.append(self.joint_index_name_dictionary[joint_index])
+            joint_msg.position.append(joint_state[0])# + math.pi)
+            joint_msg.velocity.append(joint_state[1])
+            joint_msg.effort.append(joint_state[3]) # applied torque in last sim step
+        # update msg time using ROS time api
+        joint_msg.header.stamp = rospy.Time.now()
+        # publish joint states to ROS
         self.pub_joint_states.publish(joint_msg)
 
     def start_pybullet_ros_wrapper(self):
@@ -149,10 +193,11 @@ class pyBulletRosWrapper(object):
         '''
         while not rospy.is_shutdown():
             if not self.pause_simulation:
-                # step simulation
                 pb.stepSimulation()
-                # query and publish joint get_joint_states
+                # query joint states from pybullet and publish to ROS (/joint_states)
                 self.publish_joint_states()
+                # listen to position control commands and send them to pybullet
+                self.position_ctrl_cmd()
             self.loop_rate.sleep()
         # if node is killed, disconnect
         pb.disconnect()
