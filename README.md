@@ -115,5 +115,4 @@ this is why the help of the community is welcome.
 # How to contribute?
 
 Check the issues and specifically for the tag "help needed", put a comment there stating that you would like to tackle this functionality
-
 and create a pull request after finishing it.
