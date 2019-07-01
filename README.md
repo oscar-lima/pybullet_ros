@@ -10,7 +10,7 @@ It currently lacks integration with sensors (e.g. Lidar, RGB and RGBD cameras)
 
 Some more work is needed and help/comments are welcome.
 
-Main implementation is done [here](https://github.com/oscar-lima/pybullet_ros/blob/master/ros/src/pybullet_ros/pybullet_ros_node.py)
+Main implementation is done [here](https://github.com/oscar-lima/pybullet_ros/blob/master/ros/src/pybullet_ros/pybullet_ros.py)
 
 ## Installation
 
