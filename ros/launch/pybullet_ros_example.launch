@@ -4,7 +4,7 @@
     <!-- Example launch file to run pybullet ros wrapper with proper args -->
 
     <!-- configuration for pybullet_ros node -->
-    <arg name="loop_rate" default="10.0" />
+    <arg name="loop_rate" default="80.0" />
     <arg name="pybullet_gui" default="True" />
     <arg name="robot_urdf_path" default="$(find pybullet_ros)/common/test/urdf/acrobat_robot.urdf" />
     <arg name="pause_simulation" default="False" />

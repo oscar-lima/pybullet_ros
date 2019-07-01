@@ -4,7 +4,9 @@ A bridge between [ROS](www.ros.org) and [PyBullet](https://github.com/bulletphys
 
 # Help needed
 
-This project is in a early stage and presents with position and velocity control interface (effort interface is missing).
+This project is in a early stage and presents with position, velocity and effort control interfaces.
+
+It currently lacks integration with sensors (e.g. Lidar, RGB and RGBD cameras)
 
 Some more work is needed and help/comments are welcome.
 
@@ -37,25 +39,35 @@ Publish a float msg to the following topic:
 
         rostopic pub /joint1_position_controller/command std_msgs/Float64 "data: 1.0" --once
 
-### Send velocity control commands to the robot.
+Move in position control with convenient gui:
 
-At the moment this requires a small modification in the sample launch file to prevent the joint publisher gui to open.
+        rosrun pybullet_ros joint_state_publisher
 
-        rosed pybullet_ros simple_one_joint_robot_example.launch
+A gui should pop up, use the slides to control the angle of your robot joints in position control.
 
-Comment out the following line like this:
+NOTE: This gui should not be active if using velocity of effort commands!
 
-        <!--node pkg="pybullet_ros" type="joint_state_publisher" name="manual_joint_state_publisher" output="screen" required="true" /-->
+### Send velocity or effort (torque) control commands to the robot.
 
-Launch the file as previously explained:
+Make sure position control interface gui publisher is not running (pybullet_ros -> joint_state_publisher)
 
-        roslaunch pybullet_ros simple_one_joint_robot_example.launch
+Publish a float msg to the following topics:
 
-Publish a float msg to the following topic:
+velocity controller interface:
 
-        rostopic pub /joint1_velocity_controller/command std_msgs/Float64 "data: 0.2" --once
+        rostopic pub /joint1_velocity_controller/command std_msgs/Float64 "data: 2.0" --once
 
-Done. The robot should now move in velocity control mode with the desired speed.
+effort controller interface:
+
+        rostopic pub /joint1_effort_controller/command std_msgs/Float64 "data: 2000.0" --once
+
+Done. The robot should now move in velocity or effort control mode with the desired speed/torque.
+
+## Visualize tf data and robot model in rviz
+
+A convenient configuration file is provided for the visualization of the single robot joint example, run it with:
+
+        rosrun rviz rviz --display-config `rospack find pybullet_ros`/ros/config/pybullet_config.rviz
 
 ## Services offered by this node
 
@@ -92,14 +104,16 @@ The following parameters can be used to customize the behavior of the simulator.
 
 ```~max_effort_vel_mode``` - the max effort (torque) to apply to the joint while in velocity control mode, default: 50.0
 
+NOTE: max_effort_vel_mode parameter is ignored when position or effort commands are given.
+
 # Work in progress
 
 New features will come soon, alternatively you can contribute to this project by creating issues and pull requests, your help is welcome!
 
 # What is missing?
 
+- PID gains tunning interface (maybe with dynamic reconfigure?)
 - Interface for sensors, e.g. RGB, RGDB camera, lidar, sonar.
-- Effort control interface.
 - More examples with more complex robots.
 - Integration of at least 1 robot with ROS moveit and navigation stack as proof of concept that integration with ROS is seamless.
 

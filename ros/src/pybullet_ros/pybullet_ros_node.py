@@ -3,6 +3,7 @@
 import sys
 import math
 import rospy
+import time
 import pybullet as pb
 import pybullet_data
 
@@ -68,7 +69,7 @@ class pyBulletRosWrapper(object):
         self.pub_test = rospy.Publisher('~test_publisher', String, queue_size=1)
         self.pub_joint_states = rospy.Publisher('/joint_states', JointState, queue_size=1)
         # get from param server the frequency at which to run the simulation
-        self.loop_rate = rospy.Rate(rospy.get_param('~loop_rate', 10.0))
+        self.loop_rate = rospy.Rate(rospy.get_param('~loop_rate', 80.0))
         # query from param server if gui is needed
         is_gui_needed = rospy.get_param('~pybullet_gui', True)
         # get from param server the initial URDF robot to load in environment
@@ -89,8 +90,8 @@ class pyBulletRosWrapper(object):
         pb.setAdditionalSearchPath(pybullet_data.getDataPath())
         # load robot from URDF model
         self.robot = pb.loadURDF(urdf_path, useFixedBase=1)
-        # set realtime simulation
-        pb.setRealTimeSimulation(1)
+        # set realtime simulation, NOTE: no need to stepSimulation if setRealTimeSimulation is set to 1
+        # pb.setRealTimeSimulation(1) NOTE: does not currently work with effort controller
         # set gravity
         gravity = rospy.get_param('~gravity', -9.81) # get gravity from param server
         pb.setGravity(0, 0, gravity)
@@ -244,11 +245,13 @@ class pyBulletRosWrapper(object):
         '''
         while not rospy.is_shutdown():
             if not self.pause_simulation:
-                pb.stepSimulation()
-                # query joint states from pybullet and publish to ROS (/joint_states)
-                self.publish_joint_states()
                 # listen to position, velocity and effort control commands and forward them to pybullet
                 self.pve_ctrl_cmd()
+                # query joint states from pybullet and publish to ROS (/joint_states)
+                self.publish_joint_states()
+                # perform all the actions in a single forward dynamics simulation step such
+                # as collision detection, constraint solving and integration
+                pb.stepSimulation()
             self.loop_rate.sleep()
         # if node is killed, disconnect
         pb.disconnect()

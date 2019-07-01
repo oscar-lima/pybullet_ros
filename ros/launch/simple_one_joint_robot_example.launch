@@ -4,7 +4,7 @@
     <!-- Example launch file to bringup a simple one joint robot with pybullet ros wrapper in a ROS ecosystem -->
 
     <!-- configuration for pybullet_ros node -->
-    <arg name="loop_rate" default="10.0" />
+    <arg name="loop_rate" default="80.0" />
     <arg name="pybullet_gui" default="True" />
     <arg name="robot_urdf_path" default="$(find pybullet_ros)/common/test/urdf/acrobat_robot.urdf" />
     <arg name="pause_simulation" default="False" />
@@ -18,17 +18,11 @@
     <node pkg="robot_state_publisher" type="robot_state_publisher" name="robot_state_publisher" output="screen" />
 
     <include file="$(find pybullet_ros)/ros/launch/pybullet_ros_example.launch" >
-        <arg name="loop_rate" value="10.0" />
-        <arg name="pybullet_gui" value="True" />
-        <arg name="robot_urdf_path" value="$(find pybullet_ros)/common/test/urdf/acrobat_robot.urdf" />
-        <arg name="pause_simulation" value="False" />
-        <arg name="gravity" value="-9.81" />
+        <arg name="loop_rate" value="$(arg loop_rate)" />
+        <arg name="pybullet_gui" value="$(arg pybullet_gui)" />
+        <arg name="robot_urdf_path" value="$(arg robot_urdf_path)" />
+        <arg name="pause_simulation" value="$(arg pause_simulation)" />
+        <arg name="gravity" value="$(arg gravity)" />
     </include>
-    
-    <!-- actuatue the joints of your robot with rqt gui -->
-    <!--node pkg="pybullet_ros" type="joint_state_publisher" name="manual_joint_state_publisher" output="screen" required="true" /-->
-
-    <!-- rviz visualisation -->
-    <!--node pkg="rviz" type="rviz" name="rviz" args="- -display-config $(find pybullet_ros)/ros/config/pybullet_config.rviz" /-->
 
 </launch>
