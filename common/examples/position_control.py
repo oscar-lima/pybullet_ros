@@ -23,11 +23,15 @@ class testPosControl(object):
         joint_indices = [1]
         joint_commands = [setpoint]
         force_commands=[100] # maximum motor force used to reach the target value
-        #pb.setJointMotorControlArray(self.robot, joint_indices, pb.POSITION_CONTROL, joint_commands, force_commands)
-        pb.setJointMotorControlArray(bodyUniqueId=self.robot, jointIndices=joint_indices,
-                                     controlMode=pb.POSITION_CONTROL, targetVelocities=joint_commands, forces=force_commands)
+        # position control
+        #pb.setJointMotorControlArray(bodyUniqueId=self.robot, jointIndices=joint_indices,
+                                     #controlMode=pb.POSITION_CONTROL, targetPositions=joint_commands, forces=force_commands)
+        # velocity control
         #pb.setJointMotorControlArray(bodyUniqueId=self.robot, jointIndices=joint_indices,
                                      #controlMode=pb.VELOCITY_CONTROL, targetVelocities=joint_commands, forces=force_commands)
+        # effort control
+        pb.setJointMotorControlArray(bodyUniqueId=self.robot, jointIndices=joint_indices,
+                                     controlMode=pb.TORQUE_CONTROL, forces=force_commands)
 
     def sim_for_x_secs(self, duration):
         '''
@@ -40,8 +44,8 @@ class testPosControl(object):
 if __name__ == '__main__':
     my_tester_obj = testPosControl()
     time.sleep(1)
-    print('\n\nsending command now\n\n')
-    my_tester_obj.position_control_cmd(30.5)
-    time.sleep(3)
-    #my_tester_obj.sim_for_x_secs(2) # simulate for 3 seconds
+    print('\n\nSending command now\n\n')
+    my_tester_obj.position_control_cmd(100)
+    #time.sleep(3)
+    my_tester_obj.sim_for_x_secs(2) # simulate for 3 seconds
     pb.disconnect()

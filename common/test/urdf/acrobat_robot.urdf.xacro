@@ -51,7 +51,7 @@
   <joint name="joint1" type="revolute">
     <parent link="link1"/>
     <child link="link2"/>
-    <limit effort="50.0" lower="${-M_PI}" upper="${M_PI}" velocity="1.0"/>
+    <limit effort="1500.0" lower="${-M_PI}" upper="${M_PI}" velocity="100.0"/>
     <axis xyz="0 1 0"/>
     <origin xyz="0 ${width} ${height1 - axel_offset}" rpy="0 0 0"/>
   </joint>
