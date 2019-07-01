@@ -98,18 +98,14 @@ New features will come soon, alternatively you can contribute to this project by
 
 # What is missing?
 
-Interface for sensors, e.g. RGB, RGDB camera, lidar, sonar.
-
-Effort control interface.
-
-More examples with more complex robots.
-
-Integration of at least 1 robot with ROS moveit and navigation stack as proof of concept that integration with ROS is seamless.
+- Interface for sensors, e.g. RGB, RGDB camera, lidar, sonar.
+- Effort control interface.
+- More examples with more complex robots.
+- Integration of at least 1 robot with ROS moveit and navigation stack as proof of concept that integration with ROS is seamless.
 
 # When will it be finished?
 
 It's hard to say as at this moment I am working on this project as a hobby and only in my free time (mostly Sunday's) however
-
 this is why the help of the community is welcome.
 
 # How to contribute?
