@@ -103,7 +103,7 @@ class pyBulletRosWrapper(object):
         self.numj = len(self.joint_index_name_dictionary)
         # the max force to apply to the joint, used in velocity control
         self.force_commands = []
-        max_effort_vel_mode = rospy.get_param('~max_effort_vel_mode', 50) # get gravity from param server
+        max_effort_vel_mode = rospy.get_param('~max_effort_vel_mode', 50.0) # get gravity from param server
         # setup subscribers
         self.pc_subscribers = []
         self.vc_subscribers = []

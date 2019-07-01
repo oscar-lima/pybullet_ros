@@ -90,6 +90,30 @@ The following parameters can be used to customize the behavior of the simulator.
 
 ```~gravity``` - the desired value of gravity for your simulation physics engine, default : -9.81
 
+```~max_effort_vel_mode``` - the max effort (torque) to apply to the joint while in velocity control mode, default: 50.0
+
 # Work in progress
 
-New feature will come soon, alternatively you can contribute to this project by creating issues and pull requests, your help is welcome!
+New features will come soon, alternatively you can contribute to this project by creating issues and pull requests, your help is welcome!
+
+# What is missing?
+
+Interface for sensors, e.g. RGB, RGDB camera, lidar, sonar.
+
+Effort control interface.
+
+More examples with more complex robots.
+
+Integration of at least 1 robot with ROS moveit and navigation stack as proof of concept that integration with ROS is seamless.
+
+# When will it be finished?
+
+It's hard to say as at this moment I am working on this project as a hobby and only in my free time (mostly Sunday's) however
+
+this is why the help of the community is welcome.
+
+# How to contribute?
+
+Check the issues and specifically for the tag "help needed", put a comment there stating that you would like to tackle this functionality
+
+and create a pull request after finishing it.
