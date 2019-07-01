@@ -10,29 +10,48 @@ from std_msgs.msg import String, Float64
 from std_srvs.srv import Empty
 from sensor_msgs.msg import JointState
 
-class positionControl(object):
+class pveControl(object):
     '''
-    helper class to receive position control commands
+    helper class to receive position, velocity or effort (pve) control commands
     '''
-    def __init__(self, joint_index, joint_name):
-        rospy.Subscriber(joint_name + '_position_controller/command', Float64, self.position_controlCB, queue_size=1)
+    def __init__(self, joint_index, joint_name, controller_type):
+        '''
+        constructor:
+        joint_index - stores an integer joint identifier
+        joint_name - string with the name of the joint as described in urdf model
+        controller_type - position, velocity or effort
+        '''
+        assert(controller_type in ['position','velocity','effort'])
+        rospy.Subscriber(joint_name + '_'+ controller_type + '_controller/command', Float64, self.pvt_controlCB, queue_size=1)
         self.cmd = None
         self.data_available = False
         self.joint_index_ = joint_index
         self.joint_name_ = joint_name
 
-    def position_controlCB(self, msg):
+    def pvt_controlCB(self, msg):
+        '''
+        position, velocity or effort callback
+        '''
         self.data_available = True
         self.cmd = msg.data
 
     def get_cmd(self):
+        '''
+        method to fetch the last received command
+        '''
         self.data_available = False
         return self.cmd
 
     def is_data_available(self):
+        '''
+        flag to indicate that a command has been received
+        '''
         return self.data_available
 
     def get_joint_name(self):
+        '''
+        Unused method provided for completeness (pybullet works based upon joint index, not names
+        '''
         return self.joint_name_
 
     def get_joint_index(self):
@@ -82,16 +101,26 @@ class pyBulletRosWrapper(object):
         # get joints names and store them in dictionary
         self.joint_index_name_dictionary = self.get_joint_names()
         self.numj = len(self.joint_index_name_dictionary)
-        # remove
-        rospy.loginfo('number of joints : %d', self.numj)
-        rospy.loginfo('joint_index_name_dictionary : %s', self.joint_index_name_dictionary)
+        # the max force to apply to the joint, used in velocity control
+        self.force_commands = []
+        max_effort_vel_mode = rospy.get_param('~max_effort_vel_mode', 50) # get gravity from param server
         # setup subscribers
         self.pc_subscribers = []
-        # joint position control command individual subscribers
+        self.vc_subscribers = []
+        self.ec_subscribers = []
+        self.joint_indices = []
+        # joint position, velocity and effort control command individual subscribers
         for joint_index in self.joint_index_name_dictionary:
+            self.force_commands.append(max_effort_vel_mode)
             joint_name = self.joint_index_name_dictionary[joint_index]
+            # create list of joints for later use in pve_ctrl_cmd(...)
+            self.joint_indices.append(joint_index)
             # create position control object
-            self.pc_subscribers.append(positionControl(joint_index, joint_name))
+            self.pc_subscribers.append(pveControl(joint_index, joint_name, 'position'))
+            # create position control object
+            self.vc_subscribers.append(pveControl(joint_index, joint_name, 'velocity'))
+            # create position control object
+            self.ec_subscribers.append(pveControl(joint_index, joint_name, 'effort'))
 
     def handle_reset_simulation(self, req):
         '''
@@ -131,17 +160,39 @@ class pyBulletRosWrapper(object):
                 joint_index_name_dictionary[joint_index] = info[1].decode('utf-8') # info[1] refers to joint name
         return joint_index_name_dictionary
 
-    def position_ctrl_cmd(self):
+    def pve_ctrl_cmd(self):
         '''
+        check if user has commanded a joint and forward the request to pybullet
         '''
-        joint_indices = []
-        joint_commands = []
+        position_joint_commands = []
+        velocity_joint_commands = []
+        effort_joint_commands = []
+        # flag to indicate there are pending position control tasks
+        position_ctrl_task = False
+        velocity_ctrl_task = False
+        effort_ctrl_task = False
         for subscriber in self.pc_subscribers:
             if subscriber.is_data_available():
-                joint_indices.append(subscriber.get_joint_index())
-                joint_commands.append(subscriber.get_cmd())
-        # send commands to pybullet
-        pb.setJointMotorControlArray(self.robot, joint_indices, pb.POSITION_CONTROL, joint_commands)
+                position_joint_commands.append(subscriber.get_cmd())
+                position_ctrl_task = True
+        for subscriber in self.vc_subscribers:
+            if subscriber.is_data_available():
+                velocity_joint_commands.append(subscriber.get_cmd())
+                velocity_ctrl_task = True
+        for subscriber in self.ec_subscribers:
+            if subscriber.is_data_available():
+                effort_joint_commands.append(subscriber.get_cmd())
+                effort_ctrl_task = True
+        # forward commands to pybullet
+        if position_ctrl_task:
+            pb.setJointMotorControlArray(bodyUniqueId=self.robot, jointIndices=self.joint_indices,
+                                     controlMode=pb.POSITION_CONTROL, targetPositions=position_joint_commands, forces=self.force_commands)
+        elif velocity_ctrl_task:
+            pb.setJointMotorControlArray(bodyUniqueId=self.robot, jointIndices=self.joint_indices,
+                                     controlMode=pb.VELOCITY_CONTROL, targetVelocities=velocity_joint_commands, forces=self.force_commands)
+        elif effort_ctrl_task:
+            pb.setJointMotorControlArray(bodyUniqueId=self.robot, jointIndices=self.joint_indices,
+                                     controlMode=pb.TORQUE_CONTROL, forces=effort_joint_commands)
 
     def handle_reset_simulation(self, req):
         '''
@@ -181,7 +232,7 @@ class pyBulletRosWrapper(object):
             joint_msg.name.append(self.joint_index_name_dictionary[joint_index])
             joint_msg.position.append(joint_state[0])# + math.pi)
             joint_msg.velocity.append(joint_state[1])
-            joint_msg.effort.append(joint_state[3]) # applied torque in last sim step
+            joint_msg.effort.append(joint_state[3]) # applied effort in last sim step
         # update msg time using ROS time api
         joint_msg.header.stamp = rospy.Time.now()
         # publish joint states to ROS
@@ -196,8 +247,8 @@ class pyBulletRosWrapper(object):
                 pb.stepSimulation()
                 # query joint states from pybullet and publish to ROS (/joint_states)
                 self.publish_joint_states()
-                # listen to position control commands and send them to pybullet
-                self.position_ctrl_cmd()
+                # listen to position, velocity and effort control commands and forward them to pybullet
+                self.pve_ctrl_cmd()
             self.loop_rate.sleep()
         # if node is killed, disconnect
         pb.disconnect()

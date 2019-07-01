@@ -5,7 +5,6 @@
 <!-- =================================================================================== -->
 <!-- Revolute 1 joint manipulator -->
 <robot name="acrobat" xmlns:xacro="http://www.ros.org/wiki/xacro">
-  <!-- Space btw top of beam and the each joint -->
   <material name="black">
     <color rgba="0.0 0.0 0.0 1.0"/>
   </material>
@@ -57,12 +56,12 @@
       <inertia ixx="0.334166666667" ixy="0.0" ixz="0.0" iyy="0.334166666667" iyz="0.0" izz="0.00166666666667"/>
     </inertial>
   </link>
-  <joint name="joint1" type="continuous">
+  <joint name="joint1" type="revolute">
     <parent link="link1"/>
     <child link="link2"/>
-    <origin rpy="0 0 0" xyz="0 0.1 1.95"/>
+    <limit effort="1500.0" lower="-3.14159265359" upper="3.14159265359" velocity="100.0"/>
     <axis xyz="0 1 0"/>
-    <dynamics damping="0.7"/>
+    <origin rpy="0 0 0" xyz="0 0.1 1.95"/>
   </joint>
   <!-- Acrobat green link -->
   <link name="link2">

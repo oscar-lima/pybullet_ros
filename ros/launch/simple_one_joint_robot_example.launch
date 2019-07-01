@@ -26,9 +26,9 @@
     </include>
     
     <!-- actuatue the joints of your robot with rqt gui -->
-    <node pkg="pybullet_ros" type="joint_state_publisher" name="manual_joint_state_publisher" output="screen" required="true" />
+    <!--node pkg="pybullet_ros" type="joint_state_publisher" name="manual_joint_state_publisher" output="screen" required="true" /-->
 
     <!-- rviz visualisation -->
-    <node pkg="rviz" type="rviz" name="rviz" args="--display-config $(find pybullet_ros)/ros/config/pybullet_config.rviz" />
+    <!--node pkg="rviz" type="rviz" name="rviz" args="- -display-config $(find pybullet_ros)/ros/config/pybullet_config.rviz" /-->
 
 </launch>
