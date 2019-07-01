@@ -10,7 +10,7 @@
   <xacro:property name="axel_offset" value="0.05" /> <!-- Space btw top of beam and the each joint -->
 
   <!-- Tags needed for rviz to color model -->
-  <xacro:include filename="$(find acrobat_description)/urdf/materials.urdf.xacro" />
+  <xacro:include filename="$(find pybullet_ros)/common/test/urdf/materials.urdf.xacro" />
 
   <!-- Used for fixing robot to Gazebo 'base_link' -->
   <link name="world"/>
