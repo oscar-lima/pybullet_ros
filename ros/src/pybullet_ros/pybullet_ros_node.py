@@ -82,13 +82,14 @@ class pyBulletRosWrapper(object):
         # get joints names and store them in dictionary
         self.joint_index_name_dictionary = self.get_joint_names()
         self.numj = len(self.joint_index_name_dictionary)
-        # remove
-        rospy.loginfo('number of joints : %d', self.numj)
-        rospy.loginfo('joint_index_name_dictionary : %s', self.joint_index_name_dictionary)
+        # the max force to apply to the joint, used in velocity control
+        self.force_commands = []
+        max_torque_vel_mode = rospy.get_param('~max_torque_vel_mode', 50) # get gravity from param server
         # setup subscribers
         self.pc_subscribers = []
         # joint position control command individual subscribers
         for joint_index in self.joint_index_name_dictionary:
+            self.force_commands.append(max_torque_vel_mode)
             joint_name = self.joint_index_name_dictionary[joint_index]
             # create position control object
             self.pc_subscribers.append(positionControl(joint_index, joint_name))
@@ -141,7 +142,10 @@ class pyBulletRosWrapper(object):
                 joint_indices.append(subscriber.get_joint_index())
                 joint_commands.append(subscriber.get_cmd())
         # send commands to pybullet
-        pb.setJointMotorControlArray(self.robot, joint_indices, pb.POSITION_CONTROL, joint_commands)
+        #pb.setJointMotorControlArray(bodyUniqueId=self.robot, jointIndices=joint_indices,
+                                     #controlMode=pb.POSITION_CONTROL, targetPositions=joint_commands, forces=self.force_commands)
+        pb.setJointMotorControlArray(bodyUniqueId=self.robot, jointIndices=joint_indices,
+                                     controlMode=pb.VELOCITY_CONTROL, targetVelocities=joint_commands, forces=self.force_commands)
 
     def handle_reset_simulation(self, req):
         '''

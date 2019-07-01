@@ -8,6 +8,7 @@
   <xacro:property name="height1" value="2" /> <!-- Link 1 -->
   <xacro:property name="height2" value="1" /> <!-- Link 2 -->
   <xacro:property name="axel_offset" value="0.05" /> <!-- Space btw top of beam and the each joint -->
+  <xacro:property name="M_PI" value="3.141592653589793" />
 
   <!-- Tags needed for rviz to color model -->
   <xacro:include filename="$(find pybullet_ros)/common/test/urdf/materials.urdf.xacro" />
@@ -47,12 +48,12 @@
     </inertial>
   </link>
 
-  <joint name="joint1" type="continuous">
+  <joint name="joint1" type="revolute">
     <parent link="link1"/>
     <child link="link2"/>
-    <origin xyz="0 ${width} ${height1 - axel_offset}" rpy="0 0 0"/>
+    <limit effort="50.0" lower="${-M_PI}" upper="${M_PI}" velocity="1.0"/>
     <axis xyz="0 1 0"/>
-    <dynamics damping="0.7"/>
+    <origin xyz="0 ${width} ${height1 - axel_offset}" rpy="0 0 0"/>
   </joint>
 
   <!-- Acrobat green link -->
