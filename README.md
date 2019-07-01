@@ -4,9 +4,9 @@ A bridge between [ROS](www.ros.org) and [PyBullet](https://github.com/bulletphys
 
 # Help needed
 
-This project is in a early stage and presents only with position control interface.
+This project is in a early stage and presents with position and velocity control interface (effort interface is missing).
 
-Much more work is needed and help/comments are welcome.
+Some more work is needed and help/comments are welcome.
 
 Main implementation is done [here](https://github.com/oscar-lima/pybullet_ros/blob/master/ros/src/pybullet_ros/pybullet_ros_node.py)
 
@@ -19,7 +19,7 @@ This wrapper requires that you have pybullet installed, you can do so by executi
 Apart from that, just clone the repo inside your [catkin workspace](http://wiki.ros.org/catkin/Tutorials/create_a_workspace),
 compile (catkin build) and source your devel workspace.
 
-## Test the simulator with position control interface
+## Test the simulator with position and velocity control interface
 
 ### Bringup a simple one joint example robot
 
@@ -36,6 +36,26 @@ You should now be able to visualise the robot in a gui similiar to the following
 Publish a float msg to the following topic:
 
         rostopic pub /joint1_position_controller/command std_msgs/Float64 "data: 1.0" --once
+
+### Send velocity control commands to the robot.
+
+At the moment this requires a small modification in the sample launch file to prevent the joint publisher gui to open.
+
+        rosed pybullet_ros simple_one_joint_robot_example.launch
+
+Comment out the following line like this:
+
+        <!--node pkg="pybullet_ros" type="joint_state_publisher" name="manual_joint_state_publisher" output="screen" required="true" /-->
+
+Launch the file as previously explained:
+
+        roslaunch pybullet_ros simple_one_joint_robot_example.launch
+
+Publish a float msg to the following topic:
+
+        rostopic pub /joint1_velocity_controller/command std_msgs/Float64 "data: 0.2" --once
+
+Done. The robot should now move in velocity control mode with the desired speed.
 
 ## Services offered by this node
 
