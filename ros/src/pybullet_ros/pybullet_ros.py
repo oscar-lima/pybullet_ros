@@ -72,11 +72,6 @@ class pyBulletRosWrapper(object):
         self.loop_rate = rospy.Rate(rospy.get_param('~loop_rate', 80.0))
         # query from param server if gui is needed
         is_gui_needed = rospy.get_param('~pybullet_gui', True)
-        # get from param server the initial URDF robot to load in environment
-        urdf_path = rospy.get_param('~robot_urdf_path', None)
-        if(urdf_path == None):
-            rospy.logerr('mandatory param robot_urdf_path not set, will exit now')
-            sys.exit()
         # get from param server if user wants to pause simulation at startup
         self.pause_simulation = rospy.get_param('~pause_simulation', False)
         # start gui
@@ -88,17 +83,8 @@ class pyBulletRosWrapper(object):
         rospy.Service('~unpause_physics', Empty, self.handle_unpause_physics)
         # get pybullet path in your system and store it internally for future use, e.g. to set floor
         pb.setAdditionalSearchPath(pybullet_data.getDataPath())
-        # load robot from URDF model
-        self.robot = pb.loadURDF(urdf_path, useFixedBase=1)
-        # set realtime simulation, NOTE: no need to stepSimulation if setRealTimeSimulation is set to 1
-        # pb.setRealTimeSimulation(1) NOTE: does not currently work with effort controller
-        # set gravity
-        gravity = rospy.get_param('~gravity', -9.81) # get gravity from param server
-        pb.setGravity(0, 0, gravity)
-        # set floor
-        plane = pb.loadURDF('plane.urdf')
-        # do not pause simulation at startup
-        self.pause_simulation = False
+        # load robot URDF model, set gravity, and ground plane
+        self.init_pybullet_robot()
         # get joints names and store them in dictionary
         self.joint_index_name_dictionary = self.get_joint_names()
         self.numj = len(self.joint_index_name_dictionary)
@@ -146,6 +132,25 @@ class pyBulletRosWrapper(object):
             # hide console output from pybullet
             rospy.loginfo('-------------------------')
             return pb.connect(pb.DIRECT)
+
+    def init_pybullet_robot(self):
+        '''
+        load robot URDF model, set gravity, and ground plane
+        '''
+        # get from param server the initial URDF robot to load in environment
+        urdf_path = rospy.get_param('~robot_urdf_path', None)
+        if(urdf_path == None):
+            rospy.logerr('mandatory param robot_urdf_path not set, will exit now')
+            sys.exit()
+        # load robot from URDF model
+        self.robot = pb.loadURDF(urdf_path, useFixedBase=1)
+        # set gravity
+        gravity = rospy.get_param('~gravity', -9.81) # get gravity from param server
+        pb.setGravity(0, 0, gravity)
+        # set floor
+        pb.loadURDF('plane.urdf')
+        # set realtime simulation, NOTE: no need to stepSimulation if setRealTimeSimulation is set to 1
+        # pb.setRealTimeSimulation(1) NOTE: does not currently work with effort controller
 
     def get_joint_names(self):
         '''
@@ -200,8 +205,15 @@ class pyBulletRosWrapper(object):
         Callback to handle the service offered by this node to reset the simulation
         '''
         rospy.loginfo('reseting simulation now')
+        # pause simulation to prevent reading joint values with an empty world
+        self.pause_simulation = True
+        # remove all objects from the world and reset the world to initial conditions
         pb.resetSimulation()
-        return Empty()
+        # load UDF model again, set gravity and floor
+        self.init_pybullet_robot()
+        # resume simulation control cycle now that a new robot is in place
+        self.pause_simulation = False
+        return []
 
     def handle_pause_physics(self, req):
         '''
@@ -209,7 +221,7 @@ class pyBulletRosWrapper(object):
         '''
         rospy.loginfo('pausing simulation')
         self.pause_simulation = False
-        return Empty()
+        return []
 
     def handle_unpause_physics(self, req):
         '''
@@ -217,7 +229,7 @@ class pyBulletRosWrapper(object):
         '''
         rospy.loginfo('unpausing simulation')
         self.pause_simulation = True
-        return Empty()
+        return []
 
     def publish_joint_states(self):
         '''
