@@ -12,57 +12,48 @@ from std_srvs.srv import Empty
 from sensor_msgs.msg import JointState
 
 class pveControl(object):
-    '''
-    helper class to receive position, velocity or effort (pve) control commands
-    '''
+    """helper class to receive position, velocity or effort (pve) control commands"""
     def __init__(self, joint_index, joint_name, controller_type):
-        '''
-        constructor:
+        """constructor
         joint_index - stores an integer joint identifier
         joint_name - string with the name of the joint as described in urdf model
         controller_type - position, velocity or effort
-        '''
-        assert(controller_type in ['position','velocity','effort'])
-        rospy.Subscriber(joint_name + '_'+ controller_type + '_controller/command', Float64, self.pvt_controlCB, queue_size=1)
-        self.cmd = None
+        """
+        assert(controller_type in ['position', 'velocity', 'effort'])
+        rospy.Subscriber(joint_name + '_' + controller_type + '_controller/command',
+                         Float64, self.pve_controlCB, queue_size=1)
+        self.cmd = 0.0
         self.data_available = False
         self.joint_index_ = joint_index
         self.joint_name_ = joint_name
 
-    def pvt_controlCB(self, msg):
-        '''
-        position, velocity or effort callback
-        '''
+    def pve_controlCB(self, msg):
+        """position, velocity or effort callback
+        msg - the msg passed by the ROS network via topic publication
+        """
         self.data_available = True
         self.cmd = msg.data
 
-    def get_cmd(self):
-        '''
-        method to fetch the last received command
-        '''
+    def get_last_cmd(self):
+        """method to fetch the last received command"""
         self.data_available = False
         return self.cmd
 
-    def is_data_available(self):
-        '''
-        flag to indicate that a command has been received
-        '''
+    def get_is_data_available(self):
+        """method to retrieve flag to indicate that a command has been received"""
         return self.data_available
 
     def get_joint_name(self):
-        '''
-        Unused method provided for completeness (pybullet works based upon joint index, not names
-        '''
+        """Unused method provided for completeness (pybullet works based upon joint index, not names)"""
         return self.joint_name_
 
     def get_joint_index(self):
+        """method used to retrieve the joint int index that this class points to"""
         return self.joint_index_
 
 
 class pyBulletRosWrapper(object):
-    '''
-    ROS wrapper class for pybullet simulator
-    '''
+    """ROS wrapper class for pybullet simulator"""
     def __init__(self):
         rospy.loginfo('pybullet ROS wrapper started')
         # setup publishers
@@ -74,7 +65,6 @@ class pyBulletRosWrapper(object):
         is_gui_needed = rospy.get_param('~pybullet_gui', True)
         # get from param server if user wants to pause simulation at startup
         self.pause_simulation = rospy.get_param('~pause_simulation', False)
-        # start gui
         physicsClient = self.start_gui(gui=is_gui_needed) # we dont need to store the physics client for now...
         # setup service to restart simulation
         rospy.Service('~reset_simulation', Empty, self.handle_reset_simulation)
@@ -96,8 +86,16 @@ class pyBulletRosWrapper(object):
         self.vc_subscribers = []
         self.ec_subscribers = []
         self.joint_indices = []
+        # lists to recall last received command (useful when controlling multiple joints)
+        self.position_joint_commands = []
+        self.velocity_joint_commands = []
+        self.effort_joint_commands = []
         # joint position, velocity and effort control command individual subscribers
         for joint_index in self.joint_index_name_dictionary:
+            self.position_joint_commands.append(0.0)
+            self.velocity_joint_commands.append(0.0)
+            self.effort_joint_commands.append(0.0)
+            # used only in velocity control mode
             self.force_commands.append(max_effort_vel_mode)
             joint_name = self.joint_index_name_dictionary[joint_index]
             # create list of joints for later use in pve_ctrl_cmd(...)
@@ -108,19 +106,19 @@ class pyBulletRosWrapper(object):
             self.vc_subscribers.append(pveControl(joint_index, joint_name, 'velocity'))
             # create position control object
             self.ec_subscribers.append(pveControl(joint_index, joint_name, 'effort'))
+        # send torque = 0 to all joints at start for the robot not to fall by gravity
+        pb.setJointMotorControlArray(bodyUniqueId=self.robot, jointIndices=self.joint_indices,
+                                     controlMode=pb.TORQUE_CONTROL, forces=self.effort_joint_commands)
+
 
     def handle_reset_simulation(self, req):
-        '''
-        Callback to handle the service offered by this node to reset the simulation
-        '''
+        """Callback to handle the service offered by this node to reset the simulation"""
         rospy.loginfo('reseting simulation now')
         pb.resetSimulation()
         return Empty()
 
     def start_gui(self, gui=True):
-        '''
-        start physics engine (client) with or without gui
-        '''
+        """start physics engine (client) with or without gui"""
         if(gui):
             # start simulation with gui
             rospy.loginfo('Running pybullet with gui')
@@ -134,9 +132,7 @@ class pyBulletRosWrapper(object):
             return pb.connect(pb.DIRECT)
 
     def init_pybullet_robot(self):
-        '''
-        load robot URDF model, set gravity, and ground plane
-        '''
+        """load robot URDF model, set gravity, and ground plane"""
         # get from param server the initial URDF robot to load in environment
         urdf_path = rospy.get_param('~robot_urdf_path', None)
         if(urdf_path == None):
@@ -149,14 +145,13 @@ class pyBulletRosWrapper(object):
         pb.setGravity(0, 0, gravity)
         # set floor
         pb.loadURDF('plane.urdf')
-        # set realtime simulation, NOTE: no need to stepSimulation if setRealTimeSimulation is set to 1
-        # pb.setRealTimeSimulation(1) NOTE: does not currently work with effort controller
+        # set no realtime simulation, NOTE: no need to stepSimulation if setRealTimeSimulation is set to 1
+        pb.setRealTimeSimulation(0) # NOTE: does not currently work with effort controller, thats why is left as 0
 
     def get_joint_names(self):
-        '''
-        filter in only joints, get their names and build a dictionary of
-        joint id's -> joint names. Return the dictionary
-        '''
+        """filter out all non revolute joints, get their names and
+        build a dictionary of joint id's to joint names.
+        """
         joint_index_name_dictionary = {}
         for joint_index in range(0, pb.getNumJoints(self.robot)):
             info = pb.getJointInfo(self.robot, joint_index)
@@ -167,43 +162,36 @@ class pyBulletRosWrapper(object):
         return joint_index_name_dictionary
 
     def pve_ctrl_cmd(self):
-        '''
-        check if user has commanded a joint and forward the request to pybullet
-        '''
-        position_joint_commands = []
-        velocity_joint_commands = []
-        effort_joint_commands = []
+        """check if user has commanded a joint and forward the request to pybullet"""
         # flag to indicate there are pending position control tasks
         position_ctrl_task = False
         velocity_ctrl_task = False
         effort_ctrl_task = False
-        for subscriber in self.pc_subscribers:
-            if subscriber.is_data_available():
-                position_joint_commands.append(subscriber.get_cmd())
+        for index, subscriber in enumerate(self.pc_subscribers):
+            if subscriber.get_is_data_available():
+                self.position_joint_commands[index] = subscriber.get_last_cmd()
                 position_ctrl_task = True
-        for subscriber in self.vc_subscribers:
-            if subscriber.is_data_available():
-                velocity_joint_commands.append(subscriber.get_cmd())
+        for index, subscriber in enumerate(self.vc_subscribers):
+            if subscriber.get_is_data_available():
+                self.velocity_joint_commands[index] = subscriber.get_last_cmd()
                 velocity_ctrl_task = True
-        for subscriber in self.ec_subscribers:
-            if subscriber.is_data_available():
-                effort_joint_commands.append(subscriber.get_cmd())
+        for index, subscriber in enumerate(self.ec_subscribers):
+            if subscriber.get_is_data_available():
+                self.effort_joint_commands[index] = subscriber.get_last_cmd()
                 effort_ctrl_task = True
-        # forward commands to pybullet
+        # forward commands to pybullet, give priority to position control cmds, then vel, at last effort
         if position_ctrl_task:
             pb.setJointMotorControlArray(bodyUniqueId=self.robot, jointIndices=self.joint_indices,
-                                     controlMode=pb.POSITION_CONTROL, targetPositions=position_joint_commands, forces=self.force_commands)
+                                     controlMode=pb.POSITION_CONTROL, targetPositions=self.position_joint_commands, forces=self.force_commands)
         elif velocity_ctrl_task:
             pb.setJointMotorControlArray(bodyUniqueId=self.robot, jointIndices=self.joint_indices,
-                                     controlMode=pb.VELOCITY_CONTROL, targetVelocities=velocity_joint_commands, forces=self.force_commands)
+                                     controlMode=pb.VELOCITY_CONTROL, targetVelocities=self.velocity_joint_commands, forces=self.force_commands)
         elif effort_ctrl_task:
             pb.setJointMotorControlArray(bodyUniqueId=self.robot, jointIndices=self.joint_indices,
-                                     controlMode=pb.TORQUE_CONTROL, forces=effort_joint_commands)
+                                     controlMode=pb.TORQUE_CONTROL, forces=self.effort_joint_commands)
 
     def handle_reset_simulation(self, req):
-        '''
-        Callback to handle the service offered by this node to reset the simulation
-        '''
+        """Callback to handle the service offered by this node to reset the simulation"""
         rospy.loginfo('reseting simulation now')
         # pause simulation to prevent reading joint values with an empty world
         self.pause_simulation = True
@@ -216,25 +204,19 @@ class pyBulletRosWrapper(object):
         return []
 
     def handle_pause_physics(self, req):
-        '''
-        pause simulation, raise flag to prevent pybullet to execute pb.stepSimulation()
-        '''
+        """pause simulation, raise flag to prevent pybullet to execute pb.stepSimulation()"""
         rospy.loginfo('pausing simulation')
         self.pause_simulation = False
         return []
 
     def handle_unpause_physics(self, req):
-        '''
-        unpause simulation, lower flag to allow pybullet to execute pb.stepSimulation()
-        '''
+        """unpause simulation, lower flag to allow pybullet to execute pb.stepSimulation()"""
         rospy.loginfo('unpausing simulation')
         self.pause_simulation = True
         return []
 
     def publish_joint_states(self):
-        '''
-        query robot state and publish position, velocity and effort values to /joint_states
-        '''
+        """query robot state and publish position, velocity and effort values to /joint_states"""
         # setup msg placeholder
         joint_msg = JointState()
         # get joint states
@@ -252,9 +234,12 @@ class pyBulletRosWrapper(object):
         self.pub_joint_states.publish(joint_msg)
 
     def start_pybullet_ros_wrapper(self):
-        '''
-        update simulation at the desired user frequency
-        '''
+        """main simulation control cycle:
+        1) check if position, velocity or effort commands are available, if so, forward to pybullet
+        2) query joints state (current position, velocity and effort) and publish to ROS
+        3) perform a step in pybullet simulation
+        4) sleep to control the frequency of the node
+        """
         while not rospy.is_shutdown():
             if not self.pause_simulation:
                 # listen to position, velocity and effort control commands and forward them to pybullet
@@ -269,6 +254,7 @@ class pyBulletRosWrapper(object):
         pb.disconnect()
 
 def main():
-    rospy.init_node('pybullet_ros', anonymous=False)
+    """function called by pybullet_ros_node script"""
+    rospy.init_node('pybullet_ros', anonymous=False) # node name gets overrided if launched by a launch file
     pybullet_ros_interface = pyBulletRosWrapper()
     pybullet_ros_interface.start_pybullet_ros_wrapper()
