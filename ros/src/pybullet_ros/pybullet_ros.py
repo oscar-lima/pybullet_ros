@@ -138,8 +138,13 @@ class pyBulletRosWrapper(object):
         if(urdf_path == None):
             rospy.logerr('mandatory param robot_urdf_path not set, will exit now')
             sys.exit()
+        # get robot spawn pose from parameter server
+        robot_pose_x = rospy.get_param('~robot_pose_x', 0.0)
+        robot_pose_y = rospy.get_param('~robot_pose_y', 0.0)
+        robot_pose_z = rospy.get_param('~robot_pose_z', 1.0)
+        fixed_base = rospy.get_param('~fixed_base', False)
         # load robot from URDF model
-        self.robot = pb.loadURDF(urdf_path, useFixedBase=1)
+        self.robot = pb.loadURDF(urdf_path, basePosition=[robot_pose_x, robot_pose_y, robot_pose_z], useFixedBase=fixed_base)
         # set gravity
         gravity = rospy.get_param('~gravity', -9.81) # get gravity from param server
         pb.setGravity(0, 0, gravity)
