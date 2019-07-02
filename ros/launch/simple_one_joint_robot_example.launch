@@ -3,26 +3,29 @@
 
     <!-- Example launch file to bringup a simple one joint robot with pybullet ros wrapper in a ROS ecosystem -->
 
-    <!-- configuration for pybullet_ros node -->
+    <!-- pybullet_ros node parameters -->
     <arg name="loop_rate" default="80.0" />
     <arg name="pybullet_gui" default="True" />
     <arg name="robot_urdf_path" default="$(find pybullet_ros)/common/test/urdf/acrobat_robot.urdf" />
     <arg name="pause_simulation" default="False" />
     <arg name="gravity" default="-9.81" />
+    <arg name="max_effort_vel_mode" default="50.0" />
 
-    <!-- convert xacro to urdf and upload result to param server -->
+    <!-- upload urdf model to ROS param server -->
     <param name="robot_description"
-           command="$(find xacro)/xacro --inorder $(arg robot_urdf_path).xacro" />
+           command="$(find xacro)/xacro --inorder $(arg robot_urdf_path)" />
 
-    <!-- robot_state_publisher, publish tf based on /joint_states topic -->
+    <!-- robot_state_publisher, publish tf based on /joint_states topic and robot_description param -->
     <node pkg="robot_state_publisher" type="robot_state_publisher" name="robot_state_publisher" output="screen" />
 
+    <!-- pybullet ros wrapper -->
     <include file="$(find pybullet_ros)/ros/launch/pybullet_ros_example.launch" >
         <arg name="loop_rate" value="$(arg loop_rate)" />
         <arg name="pybullet_gui" value="$(arg pybullet_gui)" />
         <arg name="robot_urdf_path" value="$(arg robot_urdf_path)" />
         <arg name="pause_simulation" value="$(arg pause_simulation)" />
         <arg name="gravity" value="$(arg gravity)" />
+        <arg name="max_effort_vel_mode" value="$(arg max_effort_vel_mode)" />
     </include>
 
 </launch>

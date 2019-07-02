@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <launch>
 
-    <!-- Example launch file to run pybullet ros wrapper with proper args -->
+    <!-- Parametrized sample launch file to run pybullet ros wrapper -->
 
     <!-- configuration for pybullet_ros node -->
     <arg name="loop_rate" default="80.0" />
@@ -9,6 +9,7 @@
     <arg name="robot_urdf_path" default="$(find pybullet_ros)/common/test/urdf/acrobat_robot.urdf" />
     <arg name="pause_simulation" default="False" />
     <arg name="gravity" default="-9.81" />
+    <arg name="max_effort_vel_mode" default="50.0" />
 
     <!-- pybullet ros wrapper node -->
     <node pkg="pybullet_ros" type="pybullet_ros_node" name="pybullet_ros" output="screen" required="true" >
@@ -17,6 +18,7 @@
         <param name="robot_urdf_path" value="$(arg robot_urdf_path)" />
         <param name="pause_simulation" value="$(arg pause_simulation)" />
         <param name="gravity" value="$(arg gravity)" />
+        <param name="max_effort_vel_mode" value="$(arg max_effort_vel_mode)" />
     </node>
 
 </launch>
