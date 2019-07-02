@@ -27,7 +27,7 @@ compile (catkin build) and source your devel workspace.
 
 This code is shipped with a simple URDF robot for testing purposes, you can run it by executing:
 
-        roslaunch pybullet_ros simple_one_joint_robot_example.launch
+        roslaunch pybullet_ros bringup_robot_example.launch
 
 You should now be able to visualise the robot in a gui similiar to the following image:
 
