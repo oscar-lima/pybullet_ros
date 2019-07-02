@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <launch>
 
-    <!-- Example launch file to bringup a simple one joint robot with pybullet ros wrapper in a ROS ecosystem -->
+    <!-- Example launch file to bringup any robot with pybullet ros wrapper in a ROS ecosystem -->
 
     <!-- pybullet_ros node parameters -->
     <arg name="loop_rate" default="80.0" />
