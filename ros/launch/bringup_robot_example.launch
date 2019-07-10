@@ -13,6 +13,7 @@
     <arg name="robot_pose_x" default="0.0" />
     <arg name="robot_pose_y" default="0.0" />
     <arg name="robot_pose_z" default="1.0" />
+    <arg name="robot_pose_yaw" default="0.0" />
     <arg name="fixed_base" default="True" />
 
     <!-- upload urdf model to ROS param server -->
@@ -30,10 +31,14 @@
         <arg name="pause_simulation" value="$(arg pause_simulation)" />
         <arg name="gravity" value="$(arg gravity)" />
         <arg name="max_effort_vel_mode" value="$(arg max_effort_vel_mode)" />
-        <arg name="robot_pose_x" default="$(arg robot_pose_x)" />
-        <arg name="robot_pose_y" default="$(arg robot_pose_y)" />
-        <arg name="robot_pose_z" default="$(arg robot_pose_z)" />
-        <arg name="fixed_base" default="$(arg fixed_base)" />
+        <arg name="robot_pose_x" value="$(arg robot_pose_x)" />
+        <arg name="robot_pose_y" value="$(arg robot_pose_y)" />
+        <arg name="robot_pose_z" value="$(arg robot_pose_z)" />
+        <arg name="robot_pose_yaw" value="$(arg robot_pose_yaw)" />
+        <arg name="fixed_base" value="$(arg fixed_base)" />
     </include>
+
+    <!-- odom tf publisher -->
+    <node pkg="pybullet_ros" type="odom_tf.py" name="odom_tf_broadcaster" output="screen" />
 
 </launch>

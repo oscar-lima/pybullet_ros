@@ -10,6 +10,8 @@ import pybullet_data
 from std_msgs.msg import String, Float64
 from std_srvs.srv import Empty
 from sensor_msgs.msg import JointState
+from geometry_msgs.msg import Twist
+from nav_msgs.msg import Odometry
 
 class pveControl(object):
     """helper class to receive position, velocity or effort (pve) control commands"""
@@ -57,8 +59,10 @@ class pyBulletRosWrapper(object):
     def __init__(self):
         rospy.loginfo('pybullet ROS wrapper started')
         # setup publishers
-        self.pub_test = rospy.Publisher('~test_publisher', String, queue_size=1)
-        self.pub_joint_states = rospy.Publisher('/joint_states', JointState, queue_size=1)
+        self.pub_joint_states = rospy.Publisher('joint_states', JointState, queue_size=1)
+        self.pub_odometry = rospy.Publisher('odom', Odometry, queue_size=1)
+        # listen to base velocity commands
+        rospy.Subscriber("cmd_vel", Twist, self.cmdVelCB)
         # get from param server the frequency at which to run the simulation
         self.loop_rate = rospy.Rate(rospy.get_param('~loop_rate', 80.0))
         # query from param server if gui is needed
@@ -110,6 +114,15 @@ class pyBulletRosWrapper(object):
         pb.setJointMotorControlArray(bodyUniqueId=self.robot, jointIndices=self.joint_indices,
                                      controlMode=pb.TORQUE_CONTROL, forces=self.effort_joint_commands)
 
+    def cmdVelCB(self, msg):
+        """Listen to velocity commands and apply external force to robot base"""
+        # linear speed converted to force by multiplying by some factor
+        z_offset = rospy.get_param('~z_offset', -0.35)
+        pb.applyExternalForce(self.robot, linkIndex=-1, forceObj=[msg.linear.x * 2000.0, msg.linear.y * 2000.0, 0.0],
+                              posObj=[0.0, 0.0, z_offset], flags=pb.LINK_FRAME)
+        # angular speed converted to force (torque) by multiplying by some factor
+        pb.applyExternalTorque(self.robot, linkIndex=-1, torqueObj=[0.0, 0.0, msg.angular.z * 200.0],
+                               flags=pb.LINK_FRAME)
 
     def handle_reset_simulation(self, req):
         """Callback to handle the service offered by this node to reset the simulation"""
@@ -133,18 +146,28 @@ class pyBulletRosWrapper(object):
 
     def init_pybullet_robot(self):
         """load robot URDF model, set gravity, and ground plane"""
-        # get from param server the initial URDF robot to load in environment
+        # get from param server the path to the URDF robot model to load at startup
         urdf_path = rospy.get_param('~robot_urdf_path', None)
-        if(urdf_path == None):
+        if urdf_path == None:
             rospy.logerr('mandatory param robot_urdf_path not set, will exit now')
             sys.exit()
         # get robot spawn pose from parameter server
         robot_pose_x = rospy.get_param('~robot_pose_x', 0.0)
         robot_pose_y = rospy.get_param('~robot_pose_y', 0.0)
         robot_pose_z = rospy.get_param('~robot_pose_z', 1.0)
+        robot_pose_yaw = rospy.get_param('~robot_pose_yaw', 0.0)
+        robot_spawn_orientation = pb.getQuaternionFromEuler([0.0, 0.0, robot_pose_yaw])
         fixed_base = rospy.get_param('~fixed_base', False)
         # load robot from URDF model
-        self.robot = pb.loadURDF(urdf_path, basePosition=[robot_pose_x, robot_pose_y, robot_pose_z], useFixedBase=fixed_base)
+        # user decides if inertia is computed automatically by pybullet or custom
+        if rospy.get_param('~use_intertia_from_file', False):
+            # combining several boolean flags using "or" according to pybullet documentation
+            urdf_flags = pb.URDF_USE_INERTIA_FROM_FILE | pb.URDF_USE_SELF_COLLISION
+        else:
+            urdf_flags = pb.URDF_USE_SELF_COLLISION
+        # self collision enabled by default
+        self.robot = pb.loadURDF(urdf_path, basePosition=[robot_pose_x, robot_pose_y, robot_pose_z], baseOrientation=robot_spawn_orientation,
+                    useFixedBase=fixed_base, flags=urdf_flags)
         # set gravity
         gravity = rospy.get_param('~gravity', -9.81) # get gravity from param server
         pb.setGravity(0, 0, gravity)
@@ -238,6 +261,36 @@ class pyBulletRosWrapper(object):
         # publish joint states to ROS
         self.pub_joint_states.publish(joint_msg)
 
+    def publishOdometry(self):
+        """Query robot base position and velocity and publish odom topic and transform"""
+        odom_msg = Odometry()
+        odom_msg.header.frame_id = 'odom'
+        odom_msg.header.stamp = rospy.Time.now()
+        odom_msg.child_frame_id = 'base_link'
+        # query base position from pybullet
+        position, orientation = pb.getBasePositionAndOrientation(self.robot)
+        odom_msg.pose.pose.position.x = position[0]
+        odom_msg.pose.pose.position.y = position[1]
+        odom_msg.pose.pose.position.z = position[2]
+        odom_msg.pose.pose.orientation.x = orientation[0]
+        odom_msg.pose.pose.orientation.y = orientation[1]
+        odom_msg.pose.pose.orientation.z = orientation[2]
+        odom_msg.pose.pose.orientation.w = orientation[3]
+        # query base velocity from pybullet
+        linear_vel, angular_vel = pb.getBaseVelocity(self.robot)
+        odom_msg.twist.twist.linear.x = linear_vel[0]
+        odom_msg.twist.twist.linear.y = linear_vel[1]
+        odom_msg.twist.twist.linear.y = linear_vel[2]
+        odom_msg.twist.twist.angular.x = angular_vel[0]
+        odom_msg.twist.twist.angular.y = angular_vel[1]
+        odom_msg.twist.twist.angular.z = angular_vel[2]
+        self.pub_odometry.publish(odom_msg)
+        # tf publication (odom to base_link)
+        # TODO: tf can be broadcasted from here, but we have issues in melodic due to python 2/3 ...
+        # self.br = tf.TransformBroadcaster() # need to be done from constructor
+        # translation, rotation, time, child, parent
+        # self.br.sendTransform(position, orientation, rospy.Time.now(), 'base_link', 'odom')
+
     def start_pybullet_ros_wrapper(self):
         """main simulation control cycle:
         1) check if position, velocity or effort commands are available, if so, forward to pybullet
@@ -251,6 +304,8 @@ class pyBulletRosWrapper(object):
                 self.pve_ctrl_cmd()
                 # query joint states from pybullet and publish to ROS (/joint_states)
                 self.publish_joint_states()
+                # publish robot odometry
+                self.publishOdometry()
                 # perform all the actions in a single forward dynamics simulation step such
                 # as collision detection, constraint solving and integration
                 pb.stepSimulation()

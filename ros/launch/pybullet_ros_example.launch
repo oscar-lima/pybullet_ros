@@ -3,7 +3,7 @@
 
     <!-- Parametrized sample launch file to run pybullet ros wrapper -->
 
-    <!-- configuration for pybullet_ros node -->
+    <!-- relevant configuration for pybullet_ros node -->
     <arg name="loop_rate" default="80.0" />
     <arg name="pybullet_gui" default="True" />
     <arg name="robot_urdf_path" default="$(find pybullet_ros)/common/test/urdf/acrobat_robot.urdf" />
@@ -13,6 +13,7 @@
     <arg name="robot_pose_x" default="0.0" />
     <arg name="robot_pose_y" default="0.0" />
     <arg name="robot_pose_z" default="1.0" />
+    <arg name="robot_pose_yaw" default="0.0" />
     <arg name="fixed_base" default="True" />
 
     <!-- pybullet ros wrapper node -->
@@ -26,6 +27,7 @@
         <param name="robot_pose_x" value="$(arg robot_pose_x)" />
         <param name="robot_pose_y" value="$(arg robot_pose_y)" />
         <param name="robot_pose_z" value="$(arg robot_pose_z)" />
+        <param name="robot_pose_yaw" value="$(arg robot_pose_yaw)" />
         <param name="fixed_base" value="$(arg fixed_base)" />
     </node>
 
