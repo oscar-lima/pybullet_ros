@@ -80,7 +80,7 @@ class pyBulletRosWrapper(object):
         self.robot = self.init_pybullet_robot()
         # import plugins dynamically
         self.plugins = []
-        dic = rospy.get_param('~plugins', {'cmd_vel_ctrl':'cmdVelCtrl'})
+        dic = rospy.get_param('~plugins', {'pybullet_ros.cmd_vel_ctrl':'cmdVelCtrl'})
         for key in dic:
             rospy.loginfo('loading %s class from %s plugin', dic[key], key)
             # create object of the imported file class
