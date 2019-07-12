@@ -4,13 +4,13 @@ import sys
 import math
 import rospy
 import time
-import pybullet as pb
 import pybullet_data
+import importlib
 
 from std_msgs.msg import String, Float64
 from std_srvs.srv import Empty
 from sensor_msgs.msg import JointState
-from geometry_msgs.msg import Twist
+
 from nav_msgs.msg import Odometry
 
 class pveControl(object):
@@ -57,12 +57,11 @@ class pveControl(object):
 class pyBulletRosWrapper(object):
     """ROS wrapper class for pybullet simulator"""
     def __init__(self):
-        rospy.loginfo('pybullet ROS wrapper started')
+        # import pybullet
+        self.pb = importlib.import_module('pybullet')
         # setup publishers
         self.pub_joint_states = rospy.Publisher('joint_states', JointState, queue_size=1)
         self.pub_odometry = rospy.Publisher('odom', Odometry, queue_size=1)
-        # listen to base velocity commands
-        rospy.Subscriber("cmd_vel", Twist, self.cmdVelCB)
         # get from param server the frequency at which to run the simulation
         self.loop_rate = rospy.Rate(rospy.get_param('~loop_rate', 80.0))
         # query from param server if gui is needed
@@ -76,15 +75,24 @@ class pyBulletRosWrapper(object):
         rospy.Service('~pause_physics', Empty, self.handle_pause_physics)
         rospy.Service('~unpause_physics', Empty, self.handle_unpause_physics)
         # get pybullet path in your system and store it internally for future use, e.g. to set floor
-        pb.setAdditionalSearchPath(pybullet_data.getDataPath())
+        self.pb.setAdditionalSearchPath(pybullet_data.getDataPath())
         # load robot URDF model, set gravity, and ground plane
-        self.init_pybullet_robot()
+        self.robot = self.init_pybullet_robot()
+        # import plugins dynamically
+        self.plugins = []
+        dic = rospy.get_param('~plugins', {'cmd_vel_ctrl':'cmdVelCtrl'})
+        for key in dic:
+            rospy.loginfo('loading %s class from %s plugin', dic[key], key)
+            # create object of the imported file class
+            obj = getattr(importlib.import_module(key), dic[key])(self.pb, self.robot)
+            # store objects in member variable for future use
+            self.plugins.append(obj)
         # get joints names and store them in dictionary
         self.joint_index_name_dictionary = self.get_joint_names()
         self.numj = len(self.joint_index_name_dictionary)
         # the max force to apply to the joint, used in velocity control
         self.force_commands = []
-        max_effort_vel_mode = rospy.get_param('~max_effort_vel_mode', 50.0) # get gravity from param server
+        max_effort_vel_mode = rospy.get_param('~max_effort_vel_mode', 50.0)
         # setup subscribers
         self.pc_subscribers = []
         self.vc_subscribers = []
@@ -111,23 +119,14 @@ class pyBulletRosWrapper(object):
             # create position control object
             self.ec_subscribers.append(pveControl(joint_index, joint_name, 'effort'))
         # send torque = 0 to all joints at start for the robot not to fall by gravity
-        pb.setJointMotorControlArray(bodyUniqueId=self.robot, jointIndices=self.joint_indices,
-                                     controlMode=pb.TORQUE_CONTROL, forces=self.effort_joint_commands)
-
-    def cmdVelCB(self, msg):
-        """Listen to velocity commands and apply external force to robot base"""
-        # linear speed converted to force by multiplying by some factor
-        z_offset = rospy.get_param('~z_offset', -0.35)
-        pb.applyExternalForce(self.robot, linkIndex=-1, forceObj=[msg.linear.x * 2000.0, msg.linear.y * 2000.0, 0.0],
-                              posObj=[0.0, 0.0, z_offset], flags=pb.LINK_FRAME)
-        # angular speed converted to force (torque) by multiplying by some factor
-        pb.applyExternalTorque(self.robot, linkIndex=-1, torqueObj=[0.0, 0.0, msg.angular.z * 200.0],
-                               flags=pb.LINK_FRAME)
+        self.pb.setJointMotorControlArray(bodyUniqueId=self.robot, jointIndices=self.joint_indices,
+                                     controlMode=self.pb.TORQUE_CONTROL, forces=self.effort_joint_commands)
+        rospy.loginfo('pybullet ROS wrapper started')
 
     def handle_reset_simulation(self, req):
         """Callback to handle the service offered by this node to reset the simulation"""
         rospy.loginfo('reseting simulation now')
-        pb.resetSimulation()
+        self.pb.resetSimulation()
         return Empty()
 
     def start_gui(self, gui=True):
@@ -136,13 +135,13 @@ class pyBulletRosWrapper(object):
             # start simulation with gui
             rospy.loginfo('Running pybullet with gui')
             rospy.loginfo('-------------------------')
-            return pb.connect(pb.GUI)
+            return self.pb.connect(self.pb.GUI)
         else:
             # start simulation without gui (non-graphical version)
             rospy.loginfo('Running pybullet without gui')
             # hide console output from pybullet
             rospy.loginfo('-------------------------')
-            return pb.connect(pb.DIRECT)
+            return self.pb.connect(self.pb.DIRECT)
 
     def init_pybullet_robot(self):
         """load robot URDF model, set gravity, and ground plane"""
@@ -156,33 +155,33 @@ class pyBulletRosWrapper(object):
         robot_pose_y = rospy.get_param('~robot_pose_y', 0.0)
         robot_pose_z = rospy.get_param('~robot_pose_z', 1.0)
         robot_pose_yaw = rospy.get_param('~robot_pose_yaw', 0.0)
-        robot_spawn_orientation = pb.getQuaternionFromEuler([0.0, 0.0, robot_pose_yaw])
+        robot_spawn_orientation = self.pb.getQuaternionFromEuler([0.0, 0.0, robot_pose_yaw])
         fixed_base = rospy.get_param('~fixed_base', False)
         # load robot from URDF model
         # user decides if inertia is computed automatically by pybullet or custom
         if rospy.get_param('~use_intertia_from_file', False):
             # combining several boolean flags using "or" according to pybullet documentation
-            urdf_flags = pb.URDF_USE_INERTIA_FROM_FILE | pb.URDF_USE_SELF_COLLISION
+            urdf_flags = self.pb.URDF_USE_INERTIA_FROM_FILE | self.pb.URDF_USE_SELF_COLLISION
         else:
-            urdf_flags = pb.URDF_USE_SELF_COLLISION
-        # self collision enabled by default
-        self.robot = pb.loadURDF(urdf_path, basePosition=[robot_pose_x, robot_pose_y, robot_pose_z], baseOrientation=robot_spawn_orientation,
-                    useFixedBase=fixed_base, flags=urdf_flags)
+            urdf_flags = self.pb.URDF_USE_SELF_COLLISION
         # set gravity
         gravity = rospy.get_param('~gravity', -9.81) # get gravity from param server
-        pb.setGravity(0, 0, gravity)
+        self.pb.setGravity(0, 0, gravity)
         # set floor
-        pb.loadURDF('plane.urdf')
+        self.pb.loadURDF('plane.urdf')
         # set no realtime simulation, NOTE: no need to stepSimulation if setRealTimeSimulation is set to 1
-        pb.setRealTimeSimulation(0) # NOTE: does not currently work with effort controller, thats why is left as 0
+        self.pb.setRealTimeSimulation(0) # NOTE: does not currently work with effort controller, thats why is left as 0
+        # NOTE: self collision enabled by default
+        return self.pb.loadURDF(urdf_path, basePosition=[robot_pose_x, robot_pose_y, robot_pose_z], baseOrientation=robot_spawn_orientation,
+                    useFixedBase=fixed_base, flags=urdf_flags)
 
     def get_joint_names(self):
         """filter out all non revolute joints, get their names and
         build a dictionary of joint id's to joint names.
         """
         joint_index_name_dictionary = {}
-        for joint_index in range(0, pb.getNumJoints(self.robot)):
-            info = pb.getJointInfo(self.robot, joint_index)
+        for joint_index in range(0, self.pb.getNumJoints(self.robot)):
+            info = self.pb.getJointInfo(self.robot, joint_index)
             # ensure we are dealing with a revolute joint
             if info[2] == 0: # 0 -> 'JOINT_REVOLUTE'
                 # insert key, value in dictionary (joint index, joint name)
@@ -209,14 +208,14 @@ class pyBulletRosWrapper(object):
                 effort_ctrl_task = True
         # forward commands to pybullet, give priority to position control cmds, then vel, at last effort
         if position_ctrl_task:
-            pb.setJointMotorControlArray(bodyUniqueId=self.robot, jointIndices=self.joint_indices,
-                                     controlMode=pb.POSITION_CONTROL, targetPositions=self.position_joint_commands, forces=self.force_commands)
+            self.pb.setJointMotorControlArray(bodyUniqueId=self.robot, jointIndices=self.joint_indices,
+                                     controlMode=self.pb.POSITION_CONTROL, targetPositions=self.position_joint_commands, forces=self.force_commands)
         elif velocity_ctrl_task:
-            pb.setJointMotorControlArray(bodyUniqueId=self.robot, jointIndices=self.joint_indices,
-                                     controlMode=pb.VELOCITY_CONTROL, targetVelocities=self.velocity_joint_commands, forces=self.force_commands)
+            self.pb.setJointMotorControlArray(bodyUniqueId=self.robot, jointIndices=self.joint_indices,
+                                     controlMode=self.pb.VELOCITY_CONTROL, targetVelocities=self.velocity_joint_commands, forces=self.force_commands)
         elif effort_ctrl_task:
-            pb.setJointMotorControlArray(bodyUniqueId=self.robot, jointIndices=self.joint_indices,
-                                     controlMode=pb.TORQUE_CONTROL, forces=self.effort_joint_commands)
+            self.pb.setJointMotorControlArray(bodyUniqueId=self.robot, jointIndices=self.joint_indices,
+                                     controlMode=self.pb.TORQUE_CONTROL, forces=self.effort_joint_commands)
 
     def handle_reset_simulation(self, req):
         """Callback to handle the service offered by this node to reset the simulation"""
@@ -224,7 +223,7 @@ class pyBulletRosWrapper(object):
         # pause simulation to prevent reading joint values with an empty world
         self.pause_simulation = True
         # remove all objects from the world and reset the world to initial conditions
-        pb.resetSimulation()
+        self.pb.resetSimulation()
         # load UDF model again, set gravity and floor
         self.init_pybullet_robot()
         # resume simulation control cycle now that a new robot is in place
@@ -232,13 +231,13 @@ class pyBulletRosWrapper(object):
         return []
 
     def handle_pause_physics(self, req):
-        """pause simulation, raise flag to prevent pybullet to execute pb.stepSimulation()"""
+        """pause simulation, raise flag to prevent pybullet to execute self.pb.stepSimulation()"""
         rospy.loginfo('pausing simulation')
         self.pause_simulation = False
         return []
 
     def handle_unpause_physics(self, req):
-        """unpause simulation, lower flag to allow pybullet to execute pb.stepSimulation()"""
+        """unpause simulation, lower flag to allow pybullet to execute self.pb.stepSimulation()"""
         rospy.loginfo('unpausing simulation')
         self.pause_simulation = True
         return []
@@ -250,7 +249,7 @@ class pyBulletRosWrapper(object):
         # get joint states
         for joint_index in self.joint_index_name_dictionary:
             # get joint state from pybullet
-            joint_state = pb.getJointState(self.robot, joint_index)
+            joint_state = self.pb.getJointState(self.robot, joint_index)
             # fill msg
             joint_msg.name.append(self.joint_index_name_dictionary[joint_index])
             joint_msg.position.append(joint_state[0])# + math.pi)
@@ -268,7 +267,7 @@ class pyBulletRosWrapper(object):
         odom_msg.header.stamp = rospy.Time.now()
         odom_msg.child_frame_id = 'base_link'
         # query base position from pybullet
-        position, orientation = pb.getBasePositionAndOrientation(self.robot)
+        position, orientation = self.pb.getBasePositionAndOrientation(self.robot)
         odom_msg.pose.pose.position.x = position[0]
         odom_msg.pose.pose.position.y = position[1]
         odom_msg.pose.pose.position.z = position[2]
@@ -277,7 +276,7 @@ class pyBulletRosWrapper(object):
         odom_msg.pose.pose.orientation.z = orientation[2]
         odom_msg.pose.pose.orientation.w = orientation[3]
         # query base velocity from pybullet
-        linear_vel, angular_vel = pb.getBaseVelocity(self.robot)
+        linear_vel, angular_vel = self.pb.getBaseVelocity(self.robot)
         odom_msg.twist.twist.linear.x = linear_vel[0]
         odom_msg.twist.twist.linear.y = linear_vel[1]
         odom_msg.twist.twist.linear.y = linear_vel[2]
@@ -306,12 +305,15 @@ class pyBulletRosWrapper(object):
                 self.publish_joint_states()
                 # publish robot odometry
                 self.publishOdometry()
+                # run x plugins
+                for task in self.plugins:
+                    task.execute()
                 # perform all the actions in a single forward dynamics simulation step such
                 # as collision detection, constraint solving and integration
-                pb.stepSimulation()
+                self.pb.stepSimulation()
             self.loop_rate.sleep()
         # if node is killed, disconnect
-        pb.disconnect()
+        self.pb.disconnect()
 
 def main():
     """function called by pybullet_ros_node script"""
