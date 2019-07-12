@@ -16,7 +16,7 @@ Main implementation is done [here](https://github.com/oscar-lima/pybullet_ros/bl
 
 This wrapper requires that you have pybullet installed, you can do so by executing:
 
-        sudo -H pip3 install pybullet
+        sudo -H pip3 install pybullet simple-pid
 
 Apart from that, just clone the repo inside your [catkin workspace](http://wiki.ros.org/catkin/Tutorials/create_a_workspace),
 compile (catkin build) and source your devel workspace.
