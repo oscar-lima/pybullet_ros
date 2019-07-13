@@ -10,7 +10,7 @@ import numpy as np
 
 from geometry_msgs.msg import Twist, Vector3Stamped, Vector3
 
-class cmdVelCtrl(object):
+class cmdVelCtrl:
     def __init__(self, pybullet, robot, **kargs):
         # get "import pybullet as pb" and store in self.pb
         self.pb = pybullet

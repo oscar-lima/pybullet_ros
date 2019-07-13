@@ -8,7 +8,7 @@ This component does not add any noise to it
 import rospy
 from nav_msgs.msg import Odometry
 
-class simpleOdometry(object):
+class simpleOdometry:
     def __init__(self, pybullet, robot, **kargs):
         # get "import pybullet as pb" and store in self.pb
         self.pb = pybullet

@@ -7,7 +7,9 @@ position, velocity and effort control for all revolute joints on the robot
 import rospy
 from std_msgs.msg import Float64
 
-class pveControl(object):
+# NOTE: 2 classes are implemented here, jumpt to the next one to see the plugin!
+
+class pveControl:
     """helper class to receive position, velocity or effort (pve) control commands"""
     def __init__(self, joint_index, joint_name, controller_type):
         """constructor
@@ -47,8 +49,8 @@ class pveControl(object):
         """method used to retrieve the joint int index that this class points to"""
         return self._joint_index
 
-
-class Control(object):
+# plugin is implemented below
+class Control:
     def __init__(self, pybullet, robot, **kargs):
         # get "import pybullet as pb" and store in self.pb
         self.pb = pybullet
