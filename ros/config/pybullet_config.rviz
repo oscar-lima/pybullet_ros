@@ -3,8 +3,7 @@ Panels:
     Help Height: 78
     Name: Displays
     Property Tree Widget:
-      Expanded:
-        - /Status1
+      Expanded: ~
       Splitter Ratio: 0.5
     Tree Height: 775
   - Class: rviz/Selection
@@ -49,7 +48,7 @@ Visualization Manager:
       Plane Cell Count: 10
       Reference Frame: <Fixed Frame>
       Value: true
-    - Alpha: 1
+    - Alpha: 0.699999988
       Class: rviz/RobotModel
       Collision Enabled: false
       Enabled: true
@@ -59,17 +58,83 @@ Visualization Manager:
         Expand Link Details: false
         Expand Tree: false
         Link Tree Style: Links in Alphabetic Order
-        link1:
+        base_footprint:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        base_link:
           Alpha: 1
           Show Axes: false
           Show Trail: false
           Value: true
-        link2:
+        box:
           Alpha: 1
           Show Axes: false
           Show Trail: false
           Value: true
-        world:
+        gripper_pole:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        head:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        left_back_wheel:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        left_base:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        left_front_wheel:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        left_gripper:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        left_leg:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        left_tip:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        right_back_wheel:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        right_base:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        right_front_wheel:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        right_gripper:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        right_leg:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        right_tip:
           Alpha: 1
           Show Axes: false
           Show Trail: false
@@ -84,26 +149,72 @@ Visualization Manager:
       Frame Timeout: 15
       Frames:
         All Enabled: true
-        link1:
+        base_footprint:
           Value: true
-        world:
+        base_link:
           Value: true
-      Marker Scale: 3
+        box:
+          Value: true
+        gripper_pole:
+          Value: true
+        head:
+          Value: true
+        left_back_wheel:
+          Value: true
+        left_base:
+          Value: true
+        left_front_wheel:
+          Value: true
+        left_gripper:
+          Value: true
+        left_leg:
+          Value: true
+        left_tip:
+          Value: true
+        odom:
+          Value: true
+        right_back_wheel:
+          Value: true
+        right_base:
+          Value: true
+        right_front_wheel:
+          Value: true
+        right_gripper:
+          Value: true
+        right_leg:
+          Value: true
+        right_tip:
+          Value: true
+      Marker Scale: 1
       Name: TF
       Show Arrows: true
       Show Axes: true
       Show Names: true
       Tree:
-        world:
-          link1:
-            {}
+        odom:
+          base_link:
+            head:
+              box:
+                {}
+            left_leg:
+              left_base:
+                left_back_wheel:
+                  {}
+                left_front_wheel:
+                  {}
+            right_leg:
+              right_base:
+                right_back_wheel:
+                  {}
+                right_front_wheel:
+                  {}
       Update Interval: 0
       Value: true
   Enabled: true
   Global Options:
     Background Color: 48; 48; 48
     Default Light: true
-    Fixed Frame: world
+    Fixed Frame: odom
     Frame Rate: 30
   Name: root
   Tools:
@@ -124,25 +235,25 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/Orbit
-      Distance: 10
+      Distance: 4.64404106
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.0599999987
         Stereo Focal Distance: 1
         Swap Stereo Eyes: false
         Value: false
       Focal Point:
-        X: 0
-        Y: 0
-        Z: 0
+        X: -0.0533830673
+        Y: -0.527951419
+        Z: -0.109679073
       Focal Shape Fixed Size: true
       Focal Shape Size: 0.0500000007
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.00999999978
-      Pitch: 0.785398006
+      Pitch: 0.445398062
       Target Frame: <Fixed Frame>
       Value: Orbit (rviz)
-      Yaw: 0.785398006
+      Yaw: 6.08358097
     Saved: ~
 Window Geometry:
   Displays:
