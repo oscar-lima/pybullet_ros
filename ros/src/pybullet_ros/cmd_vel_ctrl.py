@@ -20,8 +20,6 @@ class cmdVelCtrl(object):
         self.cmd_vel_msg = None
         self.received_cmd_vel_time = None
         rospy.Subscriber("cmd_vel", Twist, self.cmdVelCB)
-        # the offset in z direction to where the force will be applied to the model
-        self.z_offset = rospy.get_param('~cmd_vel_ctrl/z_offset', -0.35)
 
     # ---------- tf stuff starts
 
@@ -100,6 +98,7 @@ class cmdVelCtrl(object):
         #for j in range(0, 3):
             #output.append(self.controller[j](angular_vel[j]))
         ## apply external force to robot body
+        #self.z_offset = rospy.get_param('~cmd_vel_ctrl/z_offset', -0.35)
         #self.pb.applyExternalForce(self.robot, linkIndex=-1, forceObj=[output[0], output[1], output[2]],
                                     #posObj=[0.0, 0.0, self.z_offset], flags=self.pb.LINK_FRAME)
         #self.pb.applyExternalTorque(self.robot, linkIndex=-1, torqueObj=[output[3], output[4], output[5]],
