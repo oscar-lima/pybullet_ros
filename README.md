@@ -106,6 +106,40 @@ The following parameters can be used to customize the behavior of the simulator.
 
 NOTE: max_effort_vel_mode parameter is ignored when position or effort commands are given.
 
+# Plugin creation
+
+This section tells you how to create your own pybullet_ros plugin:
+
+1. roscd pybullet_ros/ros/src/pybullet_ros/plugins && cp plugin_template.py my_awesome_plugin.py
+
+2. add it  to param server
+
+    roscd pybullet_ros/ros/config && gedit pybullet_params.yaml
+
+Extend "plugins" param to add yours, e.g:
+
+    plugins: {  pybullet_ros.plugins.body_vel_control: cmdVelCtrl,
+                pybullet_ros.plugins.odometry: simpleOdometry,
+                pybullet_ros.plugins.control: Control}
+    
+    plugins: {  pybullet_ros.plugins.body_vel_control: cmdVelCtrl,
+                pybullet_ros.plugins.odometry: simpleOdometry,
+                pybullet_ros.plugins.control: Control,
+                pybullet_ros.plugins.plugin_template: pluginTemplate}
+
+3. Thats all! you receive a pointer to the robot and to the import of pybullet itself, e.g.
+
+        import pybullet as pb -> self.pb
+        self.robot -> self.pb.loadURDF(urdf_path, basePosition=[0,0,0], baseOrientation=[0,0,0,1], ...)
+
+Using the pybullet [documentation](https://docs.google.com/document/d/10sXEhzFRSnvFcl3XxNGhnD4N2SedqwdAvK3dsihxVUA/edit#) you should be able to do all sort of cool things, for example:
+
+- whole body velocity control -> body_vel_control.py (subscribe to /cmd_vel and command the robot in 6D)
+- position, velocity, effort control for all robot joints -> control.py (subscribes to floats and actuates joints)
+- odometry -> odometry.py (query robot pose and speed from pybullet and publish to ros /odom and /tf odom to base_link)
+
+and more...
+
 # Work in progress
 
 New features will come soon, alternatively you can contribute to this project by creating issues and pull requests, your help is welcome!
