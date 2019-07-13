@@ -1,6 +1,7 @@
 # pybullet plugins, will be loaded during runtime
-plugins: {  pybullet_ros.cmd_vel_ctrl: cmdVelCtrl,
-            pybullet_ros.odometry: odometry}
+plugins: {  pybullet_ros.plugins.body_vel_control: cmdVelCtrl,
+            pybullet_ros.plugins.odometry: simpleOdometry,
+            pybullet_ros.plugins.control: Control}
 
 loop_rate:              80.0    # the frequency at which to step sim
 gravity:                -9.81   # earth gravity
