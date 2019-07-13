@@ -117,8 +117,10 @@ class JointStatePublisher():
             # find joint_name value in received joint states msg
 
             # find index inside /joint_states msg that matches with desired joint
-            joint_index = self.joint_state_msg.name.index(joint_name)
-
+            try:
+                joint_index = self.joint_state_msg.name.index(joint_name)
+            except:
+                rospy.logwarn(joint_name + ' not found in /joint_states topic, will be ignored')
             # append found value to arm values dictionary
             self.arm_state [joint_name] = self.joint_state_msg.position[joint_index]
 
