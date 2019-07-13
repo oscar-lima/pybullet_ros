@@ -5,15 +5,12 @@ import pybullet_data
 import importlib
 
 from std_srvs.srv import Empty
-from sensor_msgs.msg import JointState
 
 class pyBulletRosWrapper(object):
     """ROS wrapper class for pybullet simulator"""
     def __init__(self):
         # import pybullet
         self.pb = importlib.import_module('pybullet')
-        # setup publishers
-        self.pub_joint_states = rospy.Publisher('joint_states', JointState, queue_size=1)
         # get from param server the frequency at which to run the simulation
         self.loop_rate = rospy.Rate(rospy.get_param('~loop_rate', 80.0))
         # query from param server if gui is needed
@@ -121,7 +118,7 @@ class pyBulletRosWrapper(object):
         self.pause_simulation = True
         # remove all objects from the world and reset the world to initial conditions
         self.pb.resetSimulation()
-        # load UDF model again, set gravity and floor
+        # load URDF model again, set gravity and floor
         self.init_pybullet_robot()
         # resume simulation control cycle now that a new robot is in place
         self.pause_simulation = False
@@ -139,24 +136,6 @@ class pyBulletRosWrapper(object):
         self.pause_simulation = True
         return []
 
-    def publish_joint_states(self):
-        """query robot state and publish position, velocity and effort values to /joint_states"""
-        # setup msg placeholder
-        joint_msg = JointState()
-        # get joint states
-        for joint_index in self.joint_index_name_dic:
-            # get joint state from pybullet
-            joint_state = self.pb.getJointState(self.robot, joint_index)
-            # fill msg
-            joint_msg.name.append(self.joint_index_name_dic[joint_index])
-            joint_msg.position.append(joint_state[0])
-            joint_msg.velocity.append(joint_state[1])
-            joint_msg.effort.append(joint_state[3]) # applied effort in last sim step
-        # update msg time using ROS time api
-        joint_msg.header.stamp = rospy.Time.now()
-        # publish joint states to ROS
-        self.pub_joint_states.publish(joint_msg)
-
     def start_pybullet_ros_wrapper(self):
         """main simulation control cycle:
         1) check if position, velocity or effort commands are available, if so, forward to pybullet
@@ -166,8 +145,6 @@ class pyBulletRosWrapper(object):
         """
         while not rospy.is_shutdown():
             if not self.pause_simulation:
-                # query joint states from pybullet and publish to ROS (/joint_states)
-                self.publish_joint_states()
                 # run x plugins
                 for task in self.plugins:
                     task.execute()
