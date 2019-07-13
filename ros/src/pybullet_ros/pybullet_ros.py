@@ -11,8 +11,6 @@ from std_msgs.msg import String, Float64
 from std_srvs.srv import Empty
 from sensor_msgs.msg import JointState
 
-from nav_msgs.msg import Odometry
-
 class pveControl(object):
     """helper class to receive position, velocity or effort (pve) control commands"""
     def __init__(self, joint_index, joint_name, controller_type):
@@ -61,7 +59,6 @@ class pyBulletRosWrapper(object):
         self.pb = importlib.import_module('pybullet')
         # setup publishers
         self.pub_joint_states = rospy.Publisher('joint_states', JointState, queue_size=1)
-        self.pub_odometry = rospy.Publisher('odom', Odometry, queue_size=1)
         # get from param server the frequency at which to run the simulation
         self.loop_rate = rospy.Rate(rospy.get_param('~loop_rate', 80.0))
         # query from param server if gui is needed
@@ -80,7 +77,9 @@ class pyBulletRosWrapper(object):
         self.robot = self.init_pybullet_robot()
         # import plugins dynamically
         self.plugins = []
-        dic = rospy.get_param('~plugins', {'pybullet_ros.cmd_vel_ctrl':'cmdVelCtrl'})
+        dic = rospy.get_param('~plugins',
+                              {'pybullet_ros.cmd_vel_ctrl':'cmdVelCtrl',
+                               'pybullet_ros.odometry':'odometry'})
         for key in dic:
             rospy.loginfo('loading %s class from %s plugin', dic[key], key)
             # create object of the imported file class
@@ -260,36 +259,6 @@ class pyBulletRosWrapper(object):
         # publish joint states to ROS
         self.pub_joint_states.publish(joint_msg)
 
-    def publishOdometry(self):
-        """Query robot base position and velocity and publish odom topic and transform"""
-        odom_msg = Odometry()
-        odom_msg.header.frame_id = 'odom'
-        odom_msg.header.stamp = rospy.Time.now()
-        odom_msg.child_frame_id = 'base_link'
-        # query base position from pybullet
-        position, orientation = self.pb.getBasePositionAndOrientation(self.robot)
-        odom_msg.pose.pose.position.x = position[0]
-        odom_msg.pose.pose.position.y = position[1]
-        odom_msg.pose.pose.position.z = position[2]
-        odom_msg.pose.pose.orientation.x = orientation[0]
-        odom_msg.pose.pose.orientation.y = orientation[1]
-        odom_msg.pose.pose.orientation.z = orientation[2]
-        odom_msg.pose.pose.orientation.w = orientation[3]
-        # query base velocity from pybullet
-        linear_vel, angular_vel = self.pb.getBaseVelocity(self.robot)
-        odom_msg.twist.twist.linear.x = linear_vel[0]
-        odom_msg.twist.twist.linear.y = linear_vel[1]
-        odom_msg.twist.twist.linear.y = linear_vel[2]
-        odom_msg.twist.twist.angular.x = angular_vel[0]
-        odom_msg.twist.twist.angular.y = angular_vel[1]
-        odom_msg.twist.twist.angular.z = angular_vel[2]
-        self.pub_odometry.publish(odom_msg)
-        # tf publication (odom to base_link)
-        # TODO: tf can be broadcasted from here, but we have issues in melodic due to python 2/3 ...
-        # self.br = tf.TransformBroadcaster() # need to be done from constructor
-        # translation, rotation, time, child, parent
-        # self.br.sendTransform(position, orientation, rospy.Time.now(), 'base_link', 'odom')
-
     def start_pybullet_ros_wrapper(self):
         """main simulation control cycle:
         1) check if position, velocity or effort commands are available, if so, forward to pybullet
@@ -303,8 +272,6 @@ class pyBulletRosWrapper(object):
                 self.pve_ctrl_cmd()
                 # query joint states from pybullet and publish to ROS (/joint_states)
                 self.publish_joint_states()
-                # publish robot odometry
-                self.publishOdometry()
                 # run x plugins
                 for task in self.plugins:
                     task.execute()
