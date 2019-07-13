@@ -2,6 +2,8 @@
 
 A bridge between [ROS](www.ros.org) and [PyBullet](https://github.com/bulletphysics/bullet3)
 
+![robot](https://github.com/oscar-lima/pybullet_ros/blob/melodic/common/images/r2d2_rviz.png "R2 D2 in ROS")
+
 # Help needed
 
 This project is in a early stage and presents with position, velocity and effort control interfaces.
@@ -10,7 +12,7 @@ It currently lacks integration with sensors (e.g. Lidar, RGB and RGBD cameras)
 
 Some more work is needed and help/comments are welcome.
 
-Main implementation is done [here](https://github.com/oscar-lima/pybullet_ros/blob/master/ros/src/pybullet_ros/pybullet_ros.py)
+Main implementation is done [here](https://github.com/oscar-lima/pybullet_ros/blob/melodic/ros/src/pybullet_ros/pybullet_ros.py)
 
 ## Installation
 
@@ -31,7 +33,7 @@ This code is shipped with a simple URDF robot for testing purposes, you can run 
 
 You should now be able to visualise the robot in a gui similiar to the following image:
 
-![robot](https://github.com/oscar-lima/pybullet_ros/blob/master/common/images/simple_one_joint_robot.png "one joint example robot")
+![robot](https://github.com/oscar-lima/pybullet_ros/blob/melodic/common/images/simple_one_joint_robot.png "one joint example robot")
 
 ### Send position control commands to the robot.
 
