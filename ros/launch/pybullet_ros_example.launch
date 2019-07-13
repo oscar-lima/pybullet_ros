@@ -3,13 +3,11 @@
 
     <!-- Parametrized sample launch file to run pybullet ros wrapper -->
 
-    <!-- relevant configuration for pybullet_ros node -->
-    <arg name="loop_rate" default="80.0" />
+    <!-- some configuration params for pybullet_ros node, rest will be loaded from pybullet_params.yaml -->
+    <arg name="param_path" default="$(find pybullet_ros)/ros/config/pybullet_params.yaml" />
     <arg name="pybullet_gui" default="True" />
     <arg name="robot_urdf_path" default="$(find pybullet_ros)/common/test/urdf/acrobat_robot.urdf" />
     <arg name="pause_simulation" default="False" />
-    <arg name="gravity" default="-9.81" />
-    <arg name="max_effort_vel_mode" default="50.0" />
     <arg name="robot_pose_x" default="0.0" />
     <arg name="robot_pose_y" default="0.0" />
     <arg name="robot_pose_z" default="1.0" />
@@ -18,12 +16,10 @@
 
     <!-- pybullet ros wrapper node -->
     <node pkg="pybullet_ros" type="pybullet_ros_node" name="pybullet_ros" output="screen" required="true" >
-        <param name="loop_rate" value="$(arg loop_rate)" />
+        <rosparam file="$(arg param_path)" command="load" />
         <param name="pybullet_gui" value="$(arg pybullet_gui)" />
         <param name="robot_urdf_path" value="$(arg robot_urdf_path)" />
         <param name="pause_simulation" value="$(arg pause_simulation)" />
-        <param name="gravity" value="$(arg gravity)" />
-        <param name="max_effort_vel_mode" value="$(arg max_effort_vel_mode)" />
         <param name="robot_pose_x" value="$(arg robot_pose_x)" />
         <param name="robot_pose_y" value="$(arg robot_pose_y)" />
         <param name="robot_pose_z" value="$(arg robot_pose_z)" />

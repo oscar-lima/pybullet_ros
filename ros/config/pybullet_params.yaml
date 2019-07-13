@@ -1,0 +1,11 @@
+# pybullet plugins, will be loaded during runtime
+plugins: {  pybullet_ros.cmd_vel_ctrl: cmdVelCtrl,
+            pybullet_ros.odometry: odometry}
+
+loop_rate:              80.0    # the frequency at which to step sim
+gravity:                -9.81   # earth gravity
+max_effort_vel_mode:    50.0    # the max force to apply to the model in vel mode
+
+# True = allow pybullet to compute the inertia tensor based on mass and volume of the collision shape
+# False = you can provide a more accurate inertia tensor, so inertia will be read then from URDF model
+# use_intertia_from_file: False # default: False
