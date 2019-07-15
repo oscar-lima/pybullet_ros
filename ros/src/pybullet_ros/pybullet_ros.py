@@ -3,6 +3,7 @@
 import rospy
 import pybullet_data
 import importlib
+import os
 
 from std_srvs.srv import Empty
 
@@ -29,6 +30,12 @@ class pyBulletRosWrapper(object):
         self.pb.setAdditionalSearchPath(pybullet_data.getDataPath())
         # load robot URDF model, set gravity, and ground plane
         self.robot = self.init_pybullet_robot()
+        self.connected_to_physics_server = None
+        if not self.robot:
+            self.connected_to_physics_server = False
+            return # Error while loading urdf file
+        else:
+            self.connected_to_physics_server = True
         # get all revolute joint names and pybullet index
         rev_joint_index_name_dic, fixed_joint_index_name_dic = self.get_all_revolute_plus_fixed_joint_names()
         # import plugins dynamically
@@ -90,6 +97,11 @@ class pyBulletRosWrapper(object):
         urdf_path = rospy.get_param('~robot_urdf_path', None)
         if urdf_path == None:
             rospy.signal_shutdown('mandatory param robot_urdf_path not set, will exit now')
+        # test urdf file existance
+        if not os.path.isfile(urdf_path):
+            rospy.logerr('param robot_urdf_path is set, but file does not exist : ' + urdf_path)
+            rospy.signal_shutdown('required robot urdf file not found')
+            return None
         # get robot spawn pose from parameter server
         robot_pose_x = rospy.get_param('~robot_pose_x', 0.0)
         robot_pose_y = rospy.get_param('~robot_pose_y', 0.0)
@@ -158,8 +170,10 @@ class pyBulletRosWrapper(object):
                 # as collision detection, constraint solving and integration
                 self.pb.stepSimulation()
             self.loop_rate.sleep()
+        rospy.logwarn('killing node now...')
         # if node is killed, disconnect
-        self.pb.disconnect()
+        if self.connected_to_physics_server:
+            self.pb.disconnect()
 
 def main():
     """function called by pybullet_ros_node script"""
