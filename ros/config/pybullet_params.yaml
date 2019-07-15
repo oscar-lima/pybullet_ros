@@ -2,9 +2,10 @@
 plugins: {  pybullet_ros.plugins.body_vel_control: cmdVelCtrl,
             pybullet_ros.plugins.odometry: simpleOdometry,
             pybullet_ros.plugins.control: Control,
-            pybullet_ros.plugins.joint_state_pub: joinStatePub}
+            pybullet_ros.plugins.joint_state_pub: joinStatePub,
+            pybullet_ros.plugins.laser_scanner: laserScanner}
 
-loop_rate:              80.0    # the frequency at which to step sim
+loop_rate:              80.0    # the frequency at which to step sim, default 80 hz
 gravity:                -9.81   # earth gravity
 max_effort_vel_mode:    50.0    # the max force to apply to the model in vel mode
 

@@ -10,7 +10,7 @@
     <arg name="pause_simulation" default="False" />
     <arg name="robot_pose_x" default="0.0" />
     <arg name="robot_pose_y" default="0.0" />
-    <arg name="robot_pose_z" default="1.0" />
+    <arg name="robot_pose_z" default="0.7" />
     <arg name="robot_pose_yaw" default="0.0" />
     <arg name="fixed_base" default="True" />
 

@@ -30,7 +30,7 @@ class pyBulletRosWrapper(object):
         # load robot URDF model, set gravity, and ground plane
         self.robot = self.init_pybullet_robot()
         # get all revolute joint names and pybullet index
-        self.joint_index_name_dic = self.get_all_revolute_joint_names()
+        rev_joint_index_name_dic, fixed_joint_index_name_dic = self.get_all_revolute_plus_fixed_joint_names()
         # import plugins dynamically
         self.plugins = []
         dic = rospy.get_param('~plugins', {})
@@ -39,25 +39,30 @@ class pyBulletRosWrapper(object):
         # return to normal shell color
         print('\033[0m')
         for key in dic:
-            rospy.loginfo('loading %s class from %s plugin', dic[key], key)
+            rospy.loginfo('loading plugin: %s class from %s', dic[key], key)
             # create object of the imported file class
-            obj = getattr(importlib.import_module(key), dic[key])(self.pb, self.robot, rev_joints=self.joint_index_name_dic)
+            obj = getattr(importlib.import_module(key), dic[key])(self.pb, self.robot,
+                          rev_joints=rev_joint_index_name_dic, fixed_joints=fixed_joint_index_name_dic)
             # store objects in member variable for future use
             self.plugins.append(obj)
-        rospy.loginfo('pybullet ROS wrapper started')
+        rospy.loginfo('pybullet ROS wrapper initialized')
 
-    def get_all_revolute_joint_names(self):
+    def get_all_revolute_plus_fixed_joint_names(self):
         """filter out all non revolute joints, get their names and
         build a dictionary of joint id's to joint names.
         """
-        joint_index_name_dictionary = {}
+        rev_joint_index_name_dic = {}
+        fixed_joint_index_name_dic = {}
         for joint_index in range(0, self.pb.getNumJoints(self.robot)):
             info = self.pb.getJointInfo(self.robot, joint_index)
             # ensure we are dealing with a revolute joint
-            if info[2] == 0: # 0 -> 'JOINT_REVOLUTE'
+            if info[2] == self.pb.JOINT_REVOLUTE:
                 # insert key, value in dictionary (joint index, joint name)
-                joint_index_name_dictionary[joint_index] = info[1].decode('utf-8') # info[1] refers to joint name
-        return joint_index_name_dictionary
+                rev_joint_index_name_dic[joint_index] = info[1].decode('utf-8') # info[1] refers to joint name
+            elif info[2] == self.pb.JOINT_FIXED:
+                # insert key, value in dictionary (joint index, joint name)
+                fixed_joint_index_name_dic[joint_index] = info[1].decode('utf-8') # info[1] refers to joint name
+        return rev_joint_index_name_dic, fixed_joint_index_name_dic
 
     def handle_reset_simulation(self, req):
         """Callback to handle the service offered by this node to reset the simulation"""
