@@ -6,7 +6,7 @@
     <!-- pybullet_ros node parameters -->
     <arg name="param_path" default="$(find pybullet_ros)/ros/config/pybullet_params.yaml" />
     <arg name="pybullet_gui" default="True" />
-    <arg name="robot_urdf_path" default="$(find pybullet_ros)/common/test/urdf/acrobat_robot.urdf" />
+    <arg name="robot_urdf_path" default="$(find pybullet_ros)/common/test/urdf/acrobat_robot/acrobat_robot.urdf" />
     <arg name="pause_simulation" default="False" />
     <arg name="robot_pose_x" default="0.0" />
     <arg name="robot_pose_y" default="0.0" />

@@ -1,9 +1,5 @@
 <?xml version="1.0"?>
-<robot name="r2d2" xmlns:xacro="http://www.ros.org/wiki/xacro">
-
-  <!--xacro:property name="hokuyo_mesh" value="package://pybullet_ros/common/meshes/sensors/hokuyo.dae" /-->
-
-  <link name="base_footprint"/>
+<robot name="physics">
   <link name="base_link">
     <visual>
       <geometry>
@@ -47,12 +43,6 @@
     </inertial>
   </link>
 
-  <joint name="footprint_to_base_link" type="fixed">
-    <parent link="base_footprint"/>
-    <child link="base_link"/>
-    <origin xyz="0 0 0" rpy="0 0 -1.57075" />
-  </joint>
-  
   <joint name="base_to_right_leg" type="fixed">
     <parent link="base_link"/>
     <child link="right_leg"/>
@@ -425,26 +415,4 @@
     <origin xyz="0 0.1214 0.1214"/>
   </joint>
 
-  <!-- laser scanner -->
-  <link name="laser_link">
-    <visual>
-      <geometry>
-        <box size=".08 .08 .08"/>
-        <!--mesh filename="package://pybullet_ros/common/meshes/sensors/hokuyo.dae"/-->
-      </geometry>
-    </visual>
-    <inertial>
-      <mass value="0.1"/>
-      <origin xyz="0 0 0"/>
-      <inertia ixx="1.0" ixy="0" ixz="0"
-               iyy="1.0" iyz="0" izz="1.0"/>
-    </inertial>
-  </link>
-
-  <joint name="base_link_to_laser_joint" type="fixed">
-    <parent link="base_link" />
-    <child link="laser_link" />
-    <origin xyz="1 0 0" rpy="0 0 0"/>
-  </joint>
-  
 </robot>

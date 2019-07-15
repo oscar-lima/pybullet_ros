@@ -111,6 +111,7 @@ class pyBulletRosWrapper(object):
         self.pb.loadURDF('plane.urdf')
         # set no realtime simulation, NOTE: no need to stepSimulation if setRealTimeSimulation is set to 1
         self.pb.setRealTimeSimulation(0) # NOTE: does not currently work with effort controller, thats why is left as 0
+        rospy.loginfo('\n\nloading urdf model: ' + urdf_path)
         # NOTE: self collision enabled by default
         return self.pb.loadURDF(urdf_path, basePosition=[robot_pose_x, robot_pose_y, robot_pose_z],
                                            baseOrientation=robot_spawn_orientation,
