@@ -3,6 +3,9 @@
 
     <!-- Example launch file to bringup any robot with pybullet ros wrapper in a ROS ecosystem -->
 
+    <!-- select your world -->
+    <arg name="world_full_path" default="$(find mbot_simulation_environments)/worlds/isr-testbed.world" />
+
     <!-- pybullet_ros node parameters -->
     <arg name="param_path" default="$(find pybullet_ros)/ros/config/pybullet_params.yaml" />
     <arg name="pybullet_gui" default="True" />
@@ -32,6 +35,7 @@
         <arg name="robot_pose_z" value="$(arg robot_pose_z)" />
         <arg name="robot_pose_yaw" value="$(arg robot_pose_yaw)" />
         <arg name="fixed_base" value="$(arg fixed_base)" />
+        <arg name="world_full_path" value="$(arg world_full_path)" />
     </include>
 
     <!-- odom tf publisher -->
