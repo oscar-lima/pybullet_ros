@@ -5,23 +5,61 @@
   <!-- Constants for robot dimensions -->
   <xacro:property name="mass" value="1" /> <!-- arbitrary value for mass -->
   <xacro:property name="width" value="0.1" /> <!-- Square dimensions (widthxwidth) of beams -->
-  <xacro:property name="height1" value="2" /> <!-- Link 1 -->
-  <xacro:property name="height2" value="1" /> <!-- Link 2 -->
+  <xacro:property name="height1" value="1.6" /> <!-- Link 1: 0.1768 -->
+  <xacro:property name="height2" value="1.2" /> <!-- Link 2: 0.1251-->
   <xacro:property name="axel_offset" value="0.05" /> <!-- Space btw top of beam and the each joint -->
   <xacro:property name="M_PI" value="3.141592653589793" />
-
+  <xacro:property name="offset1" value="0.084" /> <!-- space between floor and link 1 -->
+  <xacro:property name="base_height" value="0.15" />
   <!-- Tags needed for rviz to color model -->
-  <xacro:include filename="$(find pybullet_ros)/common/test/urdf/materials.urdf.xacro" />
+  <xacro:include filename="$(find pybullet_ros)/common/test/urdf/acrobat_robot/materials.urdf.xacro" />
 
-  <!-- Used for fixing robot to Gazebo 'base_link' -->
-  <link name="world"/>
+  <!-- robot base -->
+  <link name="odom"/>
 
-  <joint name="fixed" type="fixed">
-    <parent link="world"/>
-    <child link="link1"/>
+  <link name="base_link">
+    <collision>
+      <origin xyz="0 0 ${base_height/2}" rpy="0 0 0"/>
+      <geometry>
+        <cylinder length="${base_height}" radius="${base_height}"/>
+      </geometry>
+    </collision>
+
+    <visual>
+      <origin xyz="0 0 ${base_height/2}" rpy="0 0 0"/>
+      <geometry>
+        <cylinder length="${base_height}" radius="${base_height}"/>
+      </geometry>
+      <material name="orange"/>
+    </visual>
+
+    <inertial>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <mass value="${mass}"/>
+      <inertia
+          ixx="${mass / 12.0 * (width*width + height1*height1)}" ixy="0.0" ixz="0.0"
+          iyy="${mass / 12.0 * (height1*height1 + width*width)}" iyz="0.0"
+          izz="${mass / 12.0 * (width*width + width*width)}"/>
+    </inertial>
+  </link>
+
+  <joint name="odom_to_base_link" type="revolute">
+    <parent link="odom"/>
+    <child link="base_link"/>
+    <limit effort="1500.0" lower="${-M_PI}" upper="${M_PI}" velocity="100.0"/>
+    <axis xyz="0 0 1"/>
+    <origin xyz="0 0 0" rpy="0 0 0"/>
   </joint>
 
-  <!-- Base Link -->
+  <link name="static_link1"/>
+
+  <joint name="base_link_to_static_link1" type="fixed">
+    <parent link="base_link"/>
+    <child link="static_link1"/>
+    <origin xyz="0 0 ${base_height}" rpy="0 0 0"/>
+  </joint>
+
+  <!-- first Link -->
   <link name="link1">
     <collision>
       <origin xyz="0 0 ${height1/2}" rpy="0 0 0"/>
@@ -48,15 +86,23 @@
     </inertial>
   </link>
 
-  <joint name="joint1" type="revolute">
+  <link name="link1_tip"/>
+
+  <joint name="link1_to_link1_tip" type="fixed">
     <parent link="link1"/>
-    <child link="link2"/>
+    <child link="link1_tip"/>
+    <origin xyz="0 0 ${height1}" rpy="0 0 0"/>
+  </joint>
+  
+  <joint name="link1_to_static_link1" type="revolute">
+    <parent link="static_link1"/>
+    <child link="link1"/>
     <limit effort="1500.0" lower="${-M_PI}" upper="${M_PI}" velocity="100.0"/>
     <axis xyz="0 1 0"/>
-    <origin xyz="0 ${width} ${height1 - axel_offset}" rpy="0 0 0"/>
+    <origin xyz="0 0 0" rpy="0 0 0"/>
   </joint>
 
-  <!-- Acrobat green link -->
+  <!-- second link -->
   <link name="link2">
     <collision>
       <origin xyz="0 0 ${height2/2 - axel_offset}" rpy="0 0 0"/>
@@ -82,5 +128,21 @@
           izz="${mass / 12.0 * (width*width + width*width)}"/>
     </inertial>
   </link>
+
+  <joint name="link1_tip_to_link2" type="revolute">
+    <parent link="link1_tip"/>
+    <child link="link2"/>
+    <limit effort="1500.0" lower="${-M_PI}" upper="${M_PI}" velocity="100.0"/>
+    <axis xyz="0 1 0"/>
+    <origin xyz="0 0 0" rpy="0 0 0"/>
+  </joint>
+
+  <link name="tip_link"/>
+
+  <joint name="link2_to_tip_link" type="fixed">
+    <parent link="link2"/>
+    <child link="tip_link"/>
+    <origin xyz="0 0 ${height2 - width / 2.0}" rpy="0 0 0"/>
+  </joint>
 
 </robot>
