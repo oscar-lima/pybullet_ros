@@ -29,60 +29,108 @@
   <material name="white">
     <color rgba="1.0 1.0 1.0 1.0"/>
   </material>
-  <!-- Used for fixing robot to Gazebo 'base_link' -->
-  <link name="world"/>
-  <joint name="fixed" type="fixed">
-    <parent link="world"/>
-    <child link="link1"/>
-  </joint>
-  <!-- Base Link -->
-  <link name="link1">
+  <!-- robot base -->
+  <link name="odom"/>
+  <link name="base_link">
     <collision>
-      <origin rpy="0 0 0" xyz="0 0 1.0"/>
+      <origin rpy="0 0 0" xyz="0 0 0.075"/>
       <geometry>
-        <box size="0.1 0.1 2"/>
+        <cylinder length="0.15" radius="0.15"/>
       </geometry>
     </collision>
     <visual>
-      <origin rpy="0 0 0" xyz="0 0 1.0"/>
+      <origin rpy="0 0 0" xyz="0 0 0.075"/>
       <geometry>
-        <box size="0.1 0.1 2"/>
+        <cylinder length="0.15" radius="0.15"/>
+      </geometry>
+      <material name="orange"/>
+    </visual>
+    <inertial>
+      <origin rpy="0 0 0" xyz="0 0 0"/>
+      <mass value="0.1"/>
+      <inertia ixx="0.0214166666667" ixy="0.0" ixz="0.0" iyy="0.0214166666667" iyz="0.0" izz="0.000166666666667"/>
+    </inertial>
+  </link>
+  <joint name="odom_to_base_link" type="revolute">
+    <parent link="odom"/>
+    <child link="base_link"/>
+    <limit effort="1500.0" lower="-3.14159265359" upper="3.14159265359" velocity="100.0"/>
+    <axis xyz="0 0 1"/>
+    <origin rpy="0 0 0" xyz="0 0 0"/>
+  </joint>
+  <link name="static_link1"/>
+  <joint name="base_link_to_static_link1" type="fixed">
+    <parent link="base_link"/>
+    <child link="static_link1"/>
+    <origin rpy="0 0 0" xyz="0 0 0.15"/>
+  </joint>
+  <!-- first Link -->
+  <link name="link1">
+    <collision>
+      <origin rpy="0 0 0" xyz="0 0 0.8"/>
+      <geometry>
+        <box size="0.1 0.1 1.0"/>
+      </geometry>
+    </collision>
+    <visual>
+      <origin rpy="0 0 0" xyz="0 0 0.8"/>
+      <geometry>
+        <box size="0.1 0.1 1.6"/>
       </geometry>
       <material name="black"/>
     </visual>
     <inertial>
-      <origin rpy="0 0 0" xyz="0 0 1.0"/>
-      <mass value="1"/>
-      <inertia ixx="0.334166666667" ixy="0.0" ixz="0.0" iyy="0.334166666667" iyz="0.0" izz="0.00166666666667"/>
+      <origin rpy="0 0 0" xyz="0 0 0.8"/>
+      <mass value="0.1"/>
+      <inertia ixx="0.0214166666667" ixy="0.0" ixz="0.0" iyy="0.0214166666667" iyz="0.0" izz="0.000166666666667"/>
     </inertial>
   </link>
-  <joint name="joint1" type="revolute">
+  <link name="link1_tip"/>
+  <joint name="link1_to_link1_tip" type="fixed">
     <parent link="link1"/>
-    <child link="link2"/>
+    <child link="link1_tip"/>
+    <origin rpy="0 0 0" xyz="0 0 1.6"/>
+  </joint>
+  <joint name="link1_to_static_link1" type="revolute">
+    <parent link="static_link1"/>
+    <child link="link1"/>
     <limit effort="1500.0" lower="-3.14159265359" upper="3.14159265359" velocity="100.0"/>
     <axis xyz="0 1 0"/>
-    <origin rpy="0 0 0" xyz="0 0.1 1.95"/>
+    <origin rpy="0 0 0" xyz="0 0 0"/>
   </joint>
-  <!-- Acrobat green link -->
+  <!-- second link -->
   <link name="link2">
     <collision>
-      <origin rpy="0 0 0" xyz="0 0 0.45"/>
+      <origin rpy="0 0 0" xyz="0 0 0.55"/>
       <geometry>
-        <box size="0.1 0.1 1"/>
+        <box size="0.1 0.1 1.2"/>
       </geometry>
     </collision>
     <visual>
-      <origin rpy="0 0 0" xyz="0 0 0.45"/>
+      <origin rpy="0 0 0" xyz="0 0 0.55"/>
       <geometry>
-        <box size="0.1 0.1 1"/>
+        <box size="0.1 0.1 1.2"/>
       </geometry>
       <material name="green"/>
     </visual>
     <inertial>
-      <origin rpy="0 0 0" xyz="0 0 0.45"/>
-      <mass value="1"/>
-      <inertia ixx="0.0841666666667" ixy="0.0" ixz="0.0" iyy="0.0841666666667" iyz="0.0" izz="0.00166666666667"/>
+      <origin rpy="0 0 0" xyz="0 0 0.55"/>
+      <mass value="0.1"/>
+      <inertia ixx="0.0120833333333" ixy="0.0" ixz="0.0" iyy="0.0120833333333" iyz="0.0" izz="0.000166666666667"/>
     </inertial>
   </link>
+  <joint name="link1_tip_to_link2" type="revolute">
+    <parent link="link1_tip"/>
+    <child link="link2"/>
+    <limit effort="1500.0" lower="-3.14159265359" upper="3.14159265359" velocity="100.0"/>
+    <axis xyz="0 1 0"/>
+    <origin rpy="0 0 0" xyz="0 0 0"/>
+  </joint>
+  <link name="tip_link"/>
+  <joint name="link2_to_tip_link" type="fixed">
+    <parent link="link2"/>
+    <child link="tip_link"/>
+    <origin rpy="0 0 0" xyz="0 0 1.15"/>
+  </joint>
 </robot>
 

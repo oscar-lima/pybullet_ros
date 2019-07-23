@@ -3,7 +3,7 @@
 <robot name="acrobat" xmlns:xacro="http://www.ros.org/wiki/xacro">
 
   <!-- Constants for robot dimensions -->
-  <xacro:property name="mass" value="1" /> <!-- arbitrary value for mass -->
+  <xacro:property name="mass" value="0.1" /> <!-- arbitrary value for mass -->
   <xacro:property name="width" value="0.1" /> <!-- Square dimensions (widthxwidth) of beams -->
   <xacro:property name="height1" value="1.6" /> <!-- Link 1: 0.1768 -->
   <xacro:property name="height2" value="1.2" /> <!-- Link 2: 0.1251-->
@@ -64,7 +64,7 @@
     <collision>
       <origin xyz="0 0 ${height1/2}" rpy="0 0 0"/>
       <geometry>
-        <box size="${width} ${width} ${height1}"/>
+        <box size="${width} ${width} ${height1-0.6}"/>
       </geometry>
     </collision>
 
