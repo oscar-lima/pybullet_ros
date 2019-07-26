@@ -4,7 +4,7 @@
     <!-- Parametrized sample launch file to run pybullet ros wrapper -->
 
     <!-- partial configuration params for pybullet_ros node, rest will be loaded from pybullet_params_example.yaml -->
-    <arg name="world_full_path" default="$(find mbot_simulation_environments)/worlds/isr-testbed.world" />
+    <arg name="environment" default="$(find mbot_simulation_environments)/worlds/isr-testbed.world" />
 
     <arg name="param_path" default="$(find pybullet_ros)/ros/config/pybullet_params_example.yaml" />
     <arg name="pybullet_gui" default="True" />
@@ -27,7 +27,7 @@
         <param name="robot_pose_z" value="$(arg robot_pose_z)" />
         <param name="robot_pose_yaw" value="$(arg robot_pose_yaw)" />
         <param name="fixed_base" value="$(arg fixed_base)" />
-        <param name="world_full_path" value="$(arg world_full_path)" />
+        <param name="environment" value="$(arg environment)" />
     </node>
 
 </launch>

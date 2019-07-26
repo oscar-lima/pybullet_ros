@@ -100,9 +100,9 @@ class pyBulletRosWrapper(object):
             rospy.logwarn('GAZEBO_MODEL_PATH environment variable not set, models will not be able to load...')
             # continue blue console output
             print('\033[34m')
-        world_path = rospy.get_param('~world_full_path', None)
+        world_path = rospy.get_param('~environment', None)
         if not world_path:
-            rospy.logwarn('param world_full_path not set, will run pybullet with empty world')
+            rospy.logwarn('param environment not set, will run pybullet with empty world')
             return
         if not os.path.isfile(world_path):
             rospy.logwarn('file not found, world will not be loaded : ' + world_path)
