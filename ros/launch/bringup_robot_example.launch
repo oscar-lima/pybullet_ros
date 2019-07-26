@@ -1,13 +1,11 @@
 <?xml version="1.0"?>
 <launch>
 
-    <!-- Example launch file to bringup any robot with pybullet ros wrapper in a ROS ecosystem -->
+    <!-- Example parameterized launch file to bringup any robot with pybullet ros wrapper in a ROS ecosystem
+         It launches by default a sample r2d2 robot -->
 
-    <!-- select your world -->
+    <arg name="config_file" default="$(find pybullet_ros)/ros/config/pybullet_params_example.yaml" />
     <arg name="environment" default="$(find mbot_simulation_environments)/worlds/isr-testbed.world" />
-
-    <!-- pybullet_ros node parameters -->
-    <arg name="param_path" default="$(find pybullet_ros)/ros/config/pybullet_params_example.yaml" />
     <arg name="pybullet_gui" default="True" />
     <arg name="robot_urdf_path" default="$(find pybullet_ros)/common/test/urdf/r2d2/r2d2.urdf" />
     <arg name="pause_simulation" default="False" />
@@ -26,7 +24,8 @@
 
     <!-- pybullet ros wrapper -->
     <include file="$(find pybullet_ros)/ros/launch/pybullet_ros_example.launch" >
-        <arg name="param_path" value="$(arg param_path)" />
+        <arg name="config_file" value="$(arg config_file)" />
+        <arg name="environment" value="$(arg environment)" />
         <arg name="pybullet_gui" value="$(arg pybullet_gui)" />
         <arg name="robot_urdf_path" value="$(arg robot_urdf_path)" />
         <arg name="pause_simulation" value="$(arg pause_simulation)" />
@@ -35,7 +34,6 @@
         <arg name="robot_pose_z" value="$(arg robot_pose_z)" />
         <arg name="robot_pose_yaw" value="$(arg robot_pose_yaw)" />
         <arg name="fixed_base" value="$(arg fixed_base)" />
-        <arg name="environment" value="$(arg environment)" />
     </include>
 
     <!-- odom tf publisher -->
