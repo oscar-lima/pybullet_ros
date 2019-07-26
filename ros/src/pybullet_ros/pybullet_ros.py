@@ -134,6 +134,23 @@ class pyBulletRosWrapper(object):
             rospy.logerr('param robot_urdf_path is set, but file does not exist : ' + urdf_path)
             rospy.signal_shutdown('required robot urdf file not found')
             return None
+        # ensure urdf is not xacro, but if it is then make urdf file version out of it
+        if 'xacro' in urdf_path:
+            robot_description = rospy.get_param('robot_description', None)
+            if not robot_description:
+                rospy.logerr('required robot_description param not set')
+                return None
+            # remove xacro from name
+            urdf_path_without_xacro = urdf_path[0:urdf_path.find('.xacro')]+urdf_path[urdf_path.find('.xacro')+len('.xacro'):]
+            rospy.loginfo('generating urdf model from xacro from robot_description param server under: {0}'.format(urdf_path_without_xacro))
+            try:
+                urdf_file = open(urdf_path_without_xacro,'w')
+            except:
+                rospy.logerr('Failed to create urdf file from xacro, cannot write into destination: {0}'.format(urdf_path_without_xacro))
+                return None
+            urdf_file.write(robot_description)
+            urdf_file.close()
+            urdf_path = urdf_path_without_xacro
         # get robot spawn pose from parameter server
         robot_pose_x = rospy.get_param('~robot_pose_x', 0.0)
         robot_pose_y = rospy.get_param('~robot_pose_y', 0.0)
