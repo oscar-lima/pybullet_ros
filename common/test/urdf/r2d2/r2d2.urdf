@@ -1,5 +1,5 @@
 <?xml version="1.0"?>
-<robot name="physics">
+<robot name="r2d2">
 
   <link name="base_footprint"/>
 
