@@ -2,6 +2,11 @@
 
 """
 Subscribe to cmd_vel and apply desired speed to the robot, without any noise
+
+tf explained:
+pybullet requires that velocity of the robot is set w.r.t. world reference frame
+however cmd_vel convention required velocity to be expressed w.r.t. robot base frame
+therefore a transformation is needed.
 """
 
 import rospy
