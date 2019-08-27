@@ -12,3 +12,13 @@ max_effort_vel_mode:    50.0    # the max force to apply to the model in vel mod
 # True = allow pybullet to compute the inertia tensor based on mass and volume of the collision shape
 # False = you can provide a more accurate inertia tensor, so inertia will be read then from URDF model
 # use_intertia_from_file: False # default: False
+
+# laser plugin params
+laser_frameid:      right_leg       # reference frame of example robot r2d2
+angle_min:          -1.5707963      # -90 degree
+angle_max:          1.5707963       # 90 degree, total 180 degree fov
+laser_angle_max:    240             # from laser datasheet, 0 - 240 degree for hokuyo
+range_min:          0.01            # the minimum range that the laser is able to detect
+range_max:          6.0             # the maximum range that the laser is able to detect
+num_beams:          50              # default 512 beams for hokuyo laser
+beam_visualisation: True            # if true, pybullet lines will be drawn, representing the laser beams
