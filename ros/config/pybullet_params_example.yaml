@@ -1,23 +1,33 @@
+# NOTE: Only certain parameters are exposed here, check sample launch files for the rest
+# Configuration parameters for R2D2 robot in pybullet ros simulator
+
 # pybullet plugins, will be loaded during runtime
+# -----------------------------------------------------------------------
+# body_vel_control - Subscribe to cmd_vel and apply desired speed to the robot, without any noise
+# odometry - Query robot base pose and speed from pybullet and publish to /odom topic
+# control  - Position, velocity and effort control for all revolute joints on the robot
+# joint_state_pub - Query robot state and publish position, velocity and effort values to /joint_states
+# laser_scanner - Laser scanner simulation based on pybullet rayTestBatch function
 plugins: {  pybullet_ros.plugins.body_vel_control: cmdVelCtrl,
             pybullet_ros.plugins.odometry: simpleOdometry,
             pybullet_ros.plugins.control: Control,
             pybullet_ros.plugins.joint_state_pub: joinStatePub,
             pybullet_ros.plugins.laser_scanner: laserScanner}
 
-loop_rate:              80.0    # the frequency at which to step sim, default 80 hz
-gravity:                -9.81   # earth gravity
-max_effort_vel_mode:    50.0    # the max force to apply to the model in vel mode
+loop_rate:              80.0            # default: 80.0, the frequency at which to step sim in hz
+gravity:                -9.81           # default: -9.81, earth gravity in m/s^2
+max_effort_vel_mode:    50.0            # default: 50.0, the max force to apply to the model in vel mode
 
 # True = allow pybullet to compute the inertia tensor based on mass and volume of the collision shape
 # False = you can provide a more accurate inertia tensor, so inertia will be read then from URDF model
-# use_intertia_from_file: False # default: False
+use_intertia_from_file: False           # default: False
 
 # laser plugin params, default values are based on hokuyo URG-04LX-UG01
-laser_frameid:      laser           # default: laser, laser reference frame
-angle_min:          -1.5707963      # default: -90 deg, laser field of view (fov) min angle
-angle_max:          1.5707963       # default: 90 deg, overall (with prev param) we have a 180 degree fov
-range_min:          0.03            # the minimum distance (range) that the laser is able to detect
-range_max:          5.6             # the maximum distance (range) that the laser is able to detect
-num_beams:          50              # default: 512 beams for hokuyo laser
-beam_visualisation: True            # default: False, draw lines on pybullet gui representing the laser beams
+laser:
+    frame_id:           front_laser           # default: laser, laser reference frame
+    angle_min:          -1.5707963      # default: -90 deg, laser field of view (fov) min angle in rad
+    angle_max:          1.5707963       # default: 90 deg, overall (with prev param) we have a 180 degree fov
+    num_beams:          50              # default: 512 beams for hokuyo laser
+    range_min:          0.03            # default: 0.03, the minimum distance (range) that the laser is able to detect in m
+    range_max:          5.6             # default: 5.6, the maximum distance (range) that the laser is able to detect in m
+    beam_visualisation: False           # default: False, draw lines on pybullet gui representing the laser beams
