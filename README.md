@@ -39,9 +39,7 @@ This code is shipped with a simple URDF robot for testing purposes (r2d2), you c
 
         roslaunch pybullet_ros bringup_robot_example.launch
 
-You should now be able to visualise the robot in a gui similiar to the following image:
-
-![robot](https://github.com/oscar-lima/pybullet_ros/blob/melodic/common/images/simple_one_joint_robot.png "one joint example robot")
+You should now be able to visualise the robot in a gui.
 
 ### Send position control commands to the robot.
 
