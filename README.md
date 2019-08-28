@@ -4,30 +4,38 @@ A bridge between [ROS](www.ros.org) and [PyBullet](https://github.com/bulletphys
 
 ![robot](https://github.com/oscar-lima/pybullet_ros/blob/melodic/common/images/r2d2_rviz.png "R2 D2 in ROS")
 
-# Help needed
+# Project status
 
-This project is in a early stage and presents with position, velocity and effort control interfaces.
+This project is in a medium stage and presents with the following features:
 
-It currently lacks integration with sensors (e.g. Lidar, RGB and RGBD cameras)
+- body velocity control - subscription to cmd_vel topic and apply desired speed to the robot (without noise)
+- joint control: Position, velocity and effort control for all revolute joints on the robot
+- sensors: Robot base odometry, joint odometry (joint position, velocity and effort sensors), laser scanner
 
-Some more work is needed and help/comments are welcome.
+Missing:
+
+- sensors: RGB (image) and RGBD (pointcloud)
 
 Main implementation is done [here](https://github.com/oscar-lima/pybullet_ros/blob/melodic/ros/src/pybullet_ros/pybullet_ros.py)
 
 ## Installation
 
+The following instructions have been tested under ubuntu 16.04, 18.04 and kinetic, melodic ROS distributions.
+
 This wrapper requires that you have pybullet installed, you can do so by executing:
 
-        sudo -H pip3 install pybullet simple-pid
+        sudo -H pip3 install pybullet
 
-Apart from that, just clone the repo inside your [catkin workspace](http://wiki.ros.org/catkin/Tutorials/create_a_workspace),
-compile (catkin build) and source your devel workspace.
+Additionally clone this repository inside your [catkin workspace](http://wiki.ros.org/catkin/Tutorials/create_a_workspace),
+compile (catkin build) and source your devel workspace (as you would normally do with any ROS pkg).
 
-## Test the simulator with position and velocity control interface
+## Test the simulator
 
-### Bringup a simple one joint example robot
+We provide with 2 robots for testing purposes: acrobat and r2d2, they can be found [here](https://github.com/oscar-lima/pybullet_ros/tree/melodic/common/test/urdf).
 
-This code is shipped with a simple URDF robot for testing purposes, you can run it by executing:
+### Bringup r2d2 robot
+
+This code is shipped with a simple URDF robot for testing purposes (r2d2), you can run it by executing:
 
         roslaunch pybullet_ros bringup_robot_example.launch
 
@@ -51,7 +59,11 @@ NOTE: This gui should not be active if using velocity of effort commands!
 
 ### Send velocity or effort (torque) control commands to the robot.
 
-Make sure position control interface gui publisher is not running (pybullet_ros -> joint_state_publisher)
+NOTE: The example robot r2d2 head represents the only revolute joint in the system and can be used to test
+
+position, velocity or effort commands as described below in the following lines:
+
+Before sending commands, make sure position control interface gui publisher is not running (pybullet_ros -> joint_state_publisher)
 
 Publish a float msg to the following topics:
 
@@ -67,9 +79,26 @@ Done. The robot should now move in velocity or effort control mode with the desi
 
 ## Visualize tf data and robot model in rviz
 
-A convenient configuration file is provided for the visualization of the single robot joint example, run it with:
+A convenient configuration file is provided for the visualization of the example robot, run it with:
 
         rosrun rviz rviz --display-config `rospack find pybullet_ros`/ros/config/pybullet_config.rviz
+
+## Topics you can use to interact with this node
+
+```/joint_states``` (sensor_msgs/JointState) this topic is published at the ```pybullet_ros/loop_rate```
+parameter frequency (see parameters section for more detail).
+This topic gets listened by the robot state publisher which in turn publishes tf data to the ROS ecosystem.
+
+```tf``` - This wrapper broadcats all robot transformations to tf, using the robot state publisher and custom plugins.
+
+```scan```- Using the lidar plugin you get laser scanner readings of type sensor_msgs/LaserScan.
+
+```odom``` - Using the odometry plugin, robot body odometry gets published (nav_msgs/Odometry).
+
+```/cmd_vel``` - Using the body_vel_control plugin, the robot will subscribe to cmd_vel and exert the desired velocity to the robot.
+
+```joint_name_xtype_controller/command``` - replace "xtype" with [position, velocity, effort] - Using the control plugin, you can publish
+a joint command on this topic and the robot will forward the instruction to the robot joint.
 
 ## Services offered by this node
 
@@ -81,12 +110,6 @@ pause or unpause physics, empty args, prevents the wrapper to call stepSimulatio
 
         rosservice call /pybullet_ros/pause_physics
         rosservice call /pybullet_ros/unpause_physics
-
-## Topics you can use to interact with this node
-
-```/joint_states``` (sensor_msgs/JointState) this topic is published at the ```pybullet_ros/loop_rate```
-parameter frequency (see parameters section for more detail).
-This topic gets listened by the robot state publisher which in turn publishes tf data to the ROS ecosystem.
 
 ## Parameters
 
@@ -106,11 +129,30 @@ The following parameters can be used to customize the behavior of the simulator.
 
 ```~max_effort_vel_mode``` - the max effort (torque) to apply to the joint while in velocity control mode, default: 50.0
 
+```~use_intertia_from_file``` - if True pybullet will compute the inertia tensor based on mass and volume of the collision shape, default: False
+
+```~environment``` - Load a world file, which is a collection of sdf objects, default: Empty world
+
+```~robot_pose_x``` - The position where to spawn the robot in the world in m, default: 0.0
+
+```~robot_pose_y``` - The position where to spawn the robot in the world in m, default: 0.0
+
+```~robot_pose_z``` - The position where to spawn the robot in the world in m, default: 1.0
+
+```~robot_pose_yaw``` - The orientation where to spawn the robot in the world, default: 0.0
+
+```~fixed_base``` - If true, the first link of the robot will be fixed to the center of the world, useful for non movable robots default: False
+
 NOTE: max_effort_vel_mode parameter is ignored when position or effort commands are given.
 
 # Plugin creation
 
-This section tells you how to create your own pybullet_ros plugin:
+NOTE: Before creating a pybullet_ros plugin, make sure your plugin does not exist already
+[check available pybullet_ros plugins here](https://github.com/oscar-lima/pybullet_ros/tree/melodic/ros/src/pybullet_ros/plugins).
+
+To ease the process, we provide with a template [here](https://github.com/oscar-lima/pybullet_ros/blob/melodic/ros/src/pybullet_ros/plugins/plugin_template.py).
+
+Copy the template and follow this instructions:
 
 1. roscd pybullet_ros/ros/src/pybullet_ros/plugins && cp plugin_template.py my_awesome_plugin.py
 
@@ -134,31 +176,14 @@ Extend "plugins" param to add yours, e.g:
         import pybullet as pb -> self.pb
         self.robot -> self.pb.loadURDF(urdf_path, basePosition=[0,0,0], baseOrientation=[0,0,0,1], ...)
 
-Using the pybullet [documentation](https://docs.google.com/document/d/10sXEhzFRSnvFcl3XxNGhnD4N2SedqwdAvK3dsihxVUA/edit#) you should be able to do all sort of cool things, for example:
+Using the pybullet [documentation](https://docs.google.com/document/d/10sXEhzFRSnvFcl3XxNGhnD4N2SedqwdAvK3dsihxVUA/edit#) you should be able
+to access all the functionality that the pybullet api provides.
 
-- whole body velocity control -> body_vel_control.py (subscribe to /cmd_vel and command the robot in 6D)
-- position, velocity, effort control for all robot joints -> control.py (subscribes to floats and actuates joints)
-- odometry -> odometry.py (query robot pose and speed from pybullet and publish to ros /odom and /tf odom to base_link)
+## NOTE about the multiple r2d2 urdf models in the web
 
-and more...
-
-# Work in progress
-
-New features will come soon, alternatively you can contribute to this project by creating issues and pull requests, your help is welcome!
-
-# What is missing?
-
-- PID gains tunning interface (maybe with dynamic reconfigure?)
-- Interface for sensors, e.g. RGB, RGDB camera, lidar, sonar.
-- More examples with more complex robots.
-- Integration of at least 1 robot with ROS moveit and navigation stack as proof of concept that integration with ROS is seamless.
-
-# When will it be finished?
-
-It's hard to say as at this moment I am working on this project as a hobby and only in my free time (mostly Sunday's) however
-this is why the help of the community is welcome.
-
-# How to contribute?
-
-Check the issues and specifically for the tag "help needed", put a comment there stating that you would like to tackle this functionality
-and create a pull request after finishing it.
+As you might have already noticed, there are multiple r2d2 urdf models in the web, for instance the one that
+ROS [uses](http://wiki.ros.org/urdf/Tutorials/Building%20a%20Visual%20Robot%20Model%20with%20URDF%20from%20Scratch) to
+teach new users about URDF, however is missing collision and inertia tags. Another one can be found under pybullet repo
+[data folder](https://github.com/bulletphysics/bullet3/blob/master/data/r2d2.urdf) but that model does not follow
+[ROS conventions](https://www.ros.org/reps/rep-0103.html#axis-orientation), in particular "x" axis moves the robot forward and "y" axis moves it to the left.
+We have created our own r2d2 and included a lidar on its base to be able to test the laser scanner plugin.
