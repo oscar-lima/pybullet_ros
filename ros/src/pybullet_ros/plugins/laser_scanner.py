@@ -23,35 +23,32 @@ class laserScanner:
             return
         # get pybullet laser link id from its name
         self.pb_laser_link_id = self.get_link_index_from_name(laser_frameid)
-        # laser field of view (fov)
-        angle_min = rospy.get_param('~angle_min', -1.5707963) # limit laser to a shorter range
+        # laser params, defaults values correspond to hokuyo URG-04LX-UG01
+        # laser field of view (fov), limit laser to a shorter range if needed
+        angle_min = rospy.get_param('~angle_min', -1.5707963)
         angle_max = rospy.get_param('~angle_max', 1.5707963)
         assert(angle_max > angle_min)
-        laser_angle_max = rospy.get_param('~laser_angle_max', 240) # from laser datasheet, 0 - 240 degree for hokuyo
-        range_max = rospy.get_param('~range_max', 6.0)
-        num_beams = rospy.get_param('~num_beams', 50) # default 512 beams for hokuyo laser
+        self.laser_msg.angle_min = angle_min
+        self.laser_msg.angle_max = angle_max
+        self.laser_msg.angle_increment = (angle_max - angle_min) / self.numRays
+
+        self.laser_msg.range_min = rospy.get_param('~range_min', 0.03)
+        self.laser_msg.range_max = rospy.get_param('~range_max', 5.6)
+
+        self.numRays = rospy.get_param('~num_beams', 50) # should be 512 beams but it becomes slow
         self.beam_visualisation = rospy.get_param('~beam_visualisation', False)
         # register this node in the network as a publisher in /scan topic
         self.pub_laser_scanner = rospy.Publisher('scan', LaserScan, queue_size=1)
         self.laser_msg = LaserScan()
         self.laser_msg.header.frame_id = laser_frameid
-        self.laser_msg.angle_min = angle_min
-        self.laser_msg.angle_max = angle_max
-        self.laser_msg.angle_increment = (angle_max - angle_min) / num_beams
         self.laser_msg.time_increment = 0.01 # ?
         self.laser_msg.scan_time = 0.1 # 10 hz
-        self.laser_msg.range_min = rospy.get_param('~range_min', 0.01)
-        self.laser_msg.range_max = range_max
-        # self.laser_msg.intensities = []
         # fixed_joint_index_name_dic = kargs['fixed_joints']
-        self.numRays = num_beams # number of beams, hokuyo has 512
-        self.rayLen = range_max # max distance of the laser, Hokuyo URG-04LX-UG01 has 5.6m
         self.rayHitColor = [1, 0, 0] # red color
         self.rayMissColor = [0, 1, 0] # green color
-        self.laser_position = [0.0, 0.0, 1.0] # laser coordinates
         # compute rays end beam position
         self.rayFrom, self.rayTo = self.prepare_rays()
-        # variable used to run this plugin at a lower frequency
+        # variable used to run this plugin at a lower frequency, HACK
         self.count = 0
 
     def get_link_index_from_name(self, link_name):
@@ -65,16 +62,16 @@ class laserScanner:
         rayFrom = []
         rayTo = []
         for n in range(0, self.numRays):
-            rayFrom.append([0, 0, 0])
             alpha = self.laser_msg.angle_min + n * self.laser_msg.angle_increment
+            rayFrom.append([self.laser_msg.range_min * math.cos(alpha),
+                          self.laser_msg.range_min * math.sin(alpha), 0.0])
             rayTo.append([self.laser_msg.range_max * math.cos(alpha),
                           self.laser_msg.range_max * math.sin(alpha), 0.0])
         return rayFrom, rayTo
 
     def transform_rays(self, laser_position, laser_orientation):
         """transform rays from reference frame using pybullet functions (not tf)"""
-        # add a bit of distance on z to avoid collision with model, HACK
-        laser_position = [laser_position[0], laser_position[1], laser_position[2] + 0.1]
+        laser_position = [laser_position[0], laser_position[1], laser_position[2]]
         TFrayFrom = []
         TFrayTo = []
         rm = self.pb.getMatrixFromQuaternion(laser_orientation)
@@ -113,7 +110,7 @@ class laserScanner:
                     # draw a line on pybullet gui for debug purposes in red because it hited obstacle, results[i][3] -> hitPosition
                     self.pb.addUserDebugLine(rayFrom[i], results[i][3], self.rayHitColor)
             # compute laser ranges from hitFraction -> results[i][2]
-            self.laser_msg.ranges.append(results[i][2] * self.rayLen)
+            self.laser_msg.ranges.append(results[i][2] * self.laser_msg.range_max)
         # update laser time stamp with current time
         self.laser_msg.header.stamp = rospy.Time.now()
         # publish scan
