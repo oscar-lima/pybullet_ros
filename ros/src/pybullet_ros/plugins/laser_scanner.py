@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 
 """
-Laser scanner simulation
+Laser scanner simulation based on pybullet rayTestBatch function
+This code does not add noise to the laser scanner readings
 """
 
 import rospy
@@ -16,31 +17,35 @@ class laserScanner:
         # get robot from parent class
         self.robot = robot
         # laser params
-        laser_frameid = rospy.get_param('~laser_frameid', None) # laser reference frame, has to be an existing link
-        if not laser_frameid:
-            rospy.logerr('required parameter laser_frameid not set, will exit now')
-            rospy.signal_shutdown('required param laser_frameid not set')
+        laser_frame_id = rospy.get_param('~laser/frame_id', None) # laser reference frame, has to be an existing link
+        if not laser_frame_id:
+            rospy.logerr('required parameter laser_frame_id not set, will exit now')
+            rospy.signal_shutdown('required param laser_frame_id not set')
             return
         # get pybullet laser link id from its name
-        self.pb_laser_link_id = self.get_link_index_from_name(laser_frameid)
-        # laser params, defaults values correspond to hokuyo URG-04LX-UG01
-        # laser field of view (fov), limit laser to a shorter range if needed
-        angle_min = rospy.get_param('~angle_min', -1.5707963)
-        angle_max = rospy.get_param('~angle_max', 1.5707963)
+        link_names_to_ids_dic = kargs['link_ids']
+        if not laser_frame_id in link_names_to_ids_dic:
+            rospy.logerr('laser reference frame "{}" not found in URDF model, cannot continue'.format(laser_frame_id))
+            rospy.logwarn('Available frames are: {}'.format(link_names_to_ids_dic))
+            rospy.signal_shutdown('required param frame id not set properly')
+            return
+        self.pb_laser_link_id = link_names_to_ids_dic[laser_frame_id]
+        # create laser msg placeholder for publication
+        self.laser_msg = LaserScan()
+        # laser field of view
+        angle_min = rospy.get_param('~laser/angle_min', -1.5707963)
+        angle_max = rospy.get_param('~laser/angle_max', 1.5707963)
         assert(angle_max > angle_min)
+        self.numRays = rospy.get_param('~laser/num_beams', 50) # should be 512 beams but simulation becomes slow
+        self.laser_msg.range_min = rospy.get_param('~laser/range_min', 0.03)
+        self.laser_msg.range_max = rospy.get_param('~laser/range_max', 5.6)
+        self.beam_visualisation = rospy.get_param('~laser/beam_visualisation', False)
         self.laser_msg.angle_min = angle_min
         self.laser_msg.angle_max = angle_max
         self.laser_msg.angle_increment = (angle_max - angle_min) / self.numRays
-
-        self.laser_msg.range_min = rospy.get_param('~range_min', 0.03)
-        self.laser_msg.range_max = rospy.get_param('~range_max', 5.6)
-
-        self.numRays = rospy.get_param('~num_beams', 50) # should be 512 beams but it becomes slow
-        self.beam_visualisation = rospy.get_param('~beam_visualisation', False)
         # register this node in the network as a publisher in /scan topic
         self.pub_laser_scanner = rospy.Publisher('scan', LaserScan, queue_size=1)
-        self.laser_msg = LaserScan()
-        self.laser_msg.header.frame_id = laser_frameid
+        self.laser_msg.header.frame_id = laser_frame_id
         self.laser_msg.time_increment = 0.01 # ?
         self.laser_msg.scan_time = 0.1 # 10 hz
         # fixed_joint_index_name_dic = kargs['fixed_joints']
@@ -50,11 +55,6 @@ class laserScanner:
         self.rayFrom, self.rayTo = self.prepare_rays()
         # variable used to run this plugin at a lower frequency, HACK
         self.count = 0
-
-    def get_link_index_from_name(self, link_name):
-        # TODO: implementation missing, hand tuned to return the box in the head of R2D2
-        #return 15
-        return 0
 
     def prepare_rays(self):
         """assume laser is in the origin and compute its x, y beam end position"""
@@ -76,8 +76,10 @@ class laserScanner:
         TFrayTo = []
         rm = self.pb.getMatrixFromQuaternion(laser_orientation)
         rotation_matrix = [[rm[0], rm[1], rm[2]],[rm[3], rm[4], rm[5]],[rm[6], rm[7], rm[8]]]
+        for ray in self.rayFrom:
+            position = np.dot(rotation_matrix, [ray[0], ray[1], ray[2]]) + laser_position
+            TFrayFrom.append([position[0], position[1], position[2]])
         for ray in self.rayTo:
-            TFrayFrom.append(laser_position)
             position = np.dot(rotation_matrix, [ray[0], ray[1], ray[2]]) + laser_position
             TFrayTo.append([position[0], position[1], position[2]])
         return TFrayFrom, TFrayTo

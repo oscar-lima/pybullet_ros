@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 
+import os
+import importlib
 import rospy
 import pybullet_data
-import importlib
-import os
 import pybullet_ros.sdf.sdf_parser as sdf_parser
 
 from std_srvs.srv import Empty
@@ -38,7 +38,7 @@ class pyBulletRosWrapper(object):
         else:
             self.connected_to_physics_server = True
         # get all revolute joint names and pybullet index
-        rev_joint_index_name_dic, fixed_joint_index_name_dic = self.get_all_revolute_plus_fixed_joint_names()
+        rev_joint_index_name_dic, fixed_joint_index_name_dic, link_names_to_ids_dic = self.get_properties()
         # import plugins dynamically
         self.plugins = []
         dic = rospy.get_param('~plugins', {})
@@ -50,19 +50,26 @@ class pyBulletRosWrapper(object):
             rospy.loginfo('loading plugin: %s class from %s', dic[key], key)
             # create object of the imported file class
             obj = getattr(importlib.import_module(key), dic[key])(self.pb, self.robot,
-                          rev_joints=rev_joint_index_name_dic, fixed_joints=fixed_joint_index_name_dic)
+                          rev_joints=rev_joint_index_name_dic,
+                          fixed_joints=fixed_joint_index_name_dic,
+                          link_ids=link_names_to_ids_dic)
             # store objects in member variable for future use
             self.plugins.append(obj)
         rospy.loginfo('pybullet ROS wrapper initialized')
 
-    def get_all_revolute_plus_fixed_joint_names(self):
-        """filter out all non revolute joints, get their names and
-        build a dictionary of joint id's to joint names.
+    def get_properties(self):
+        """
+        construct 3 dictionaries:
+        - joint index to joint name x2 (1 for revolute, 1 for fixed joints)
+        - link name to link index dictionary
         """
         rev_joint_index_name_dic = {}
         fixed_joint_index_name_dic = {}
+        link_names_to_ids_dic = {}
         for joint_index in range(0, self.pb.getNumJoints(self.robot)):
             info = self.pb.getJointInfo(self.robot, joint_index)
+            # build a dictionary of link names to ids
+            link_names_to_ids_dic[info[12].decode('utf-8')] = joint_index
             # ensure we are dealing with a revolute joint
             if info[2] == self.pb.JOINT_REVOLUTE:
                 # insert key, value in dictionary (joint index, joint name)
@@ -70,7 +77,7 @@ class pyBulletRosWrapper(object):
             elif info[2] == self.pb.JOINT_FIXED:
                 # insert key, value in dictionary (joint index, joint name)
                 fixed_joint_index_name_dic[joint_index] = info[1].decode('utf-8') # info[1] refers to joint name
-        return rev_joint_index_name_dic, fixed_joint_index_name_dic
+        return rev_joint_index_name_dic, fixed_joint_index_name_dic, link_names_to_ids_dic
 
     def handle_reset_simulation(self, req):
         """Callback to handle the service offered by this node to reset the simulation"""
