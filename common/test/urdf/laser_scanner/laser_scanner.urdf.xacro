@@ -1,0 +1,55 @@
+<?xml version="1.0"?>
+<!-- simplified laser scanner, 1 box + 1 cylinder -->
+<robot name="laser_scanner" xmlns:xacro="http://www.ros.org/wiki/xacro" >
+
+  <!-- Hokuyo URG-04LX-UG01 dimensions -->
+  <xacro:property name="laser_height" value="0.041" />
+  <xacro:property name="laser_width" value="0.05" />
+  <xacro:property name="diameter" value="0.042" />
+  <xacro:property name="cylinder_height" value="0.029" />
+  <xacro:property name="measurement_window_height" value="0.0205" />
+
+  <xacro:macro name="hokuyo" params="name">
+  
+    <link name="${name}_laser_body">    
+        <visual>
+        <origin rpy="0 0 0" xyz="0 0 ${laser_height/2.0}"/>
+        <geometry>
+            <box size="${laser_width} ${laser_width} ${laser_height}"/>
+        </geometry>
+        <material name="grey"/>
+        </visual>
+        <collision>
+        <origin rpy="0 0 0" xyz="0 0 ${laser_height/2.0}"/>
+        <geometry>
+            <box size="${laser_width} ${laser_width} ${laser_height}"/>
+        </geometry>
+        </collision>
+        <!-- inertia missing! -->
+    </link>
+
+    <link name="${name}_laser">
+        <visual>
+        <origin rpy="0 0 0" xyz="0 0 ${cylinder_height/2.0 - measurement_window_height}"/>
+        <geometry>
+            <cylinder radius="${diameter/2.0}" length="${cylinder_height}"/>
+        </geometry>
+        <material name="red"/>
+        </visual>
+        <collision>
+        <origin rpy="0 0 0" xyz="0 0 ${cylinder_height/2.0 - measurement_window_height}"/>
+        <geometry>
+            <cylinder radius="${diameter/2.0}" length="${cylinder_height}"/>
+        </geometry>
+        </collision>
+        <!-- inertia missing! -->
+    </link>
+
+    <joint name="${name}_laser_body_to_${name}_laser" type="fixed">
+        <origin rpy="0 0 0" xyz="0 0 ${laser_height + measurement_window_height}"/>
+        <parent link="${name}_laser_body"/>
+        <child link="${name}_laser"/>
+    </joint>
+  </xacro:macro>
+
+</robot>
