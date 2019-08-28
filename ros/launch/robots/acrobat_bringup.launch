@@ -1,0 +1,32 @@
+<?xml version="1.0"?>
+<launch>
+
+    <!-- pybullet configuration for acrobat robot + a button-->
+
+    <arg name="world_full_path" default="$(find pybullet_ros)/common/worlds/button.world" />
+
+    <arg name="param_path" default="$(find pybullet_ros)/ros/config/robots/acrobat_robot_config.yaml" />
+    <arg name="pybullet_gui" default="True" />
+    <arg name="robot_urdf_path" default="$(find pybullet_ros)/common/test/urdf/acrobat_robot/acrobat_robot.urdf" />
+    <arg name="pause_simulation" default="False" />
+    <arg name="robot_pose_x" default="0.0" />
+    <arg name="robot_pose_y" default="0.0" />
+    <arg name="robot_pose_z" default="0.0" />
+    <arg name="robot_pose_yaw" default="0.0" />
+    <arg name="fixed_base" default="True" />
+
+    <!-- pybullet ros wrapper -->
+    <include file="$(find pybullet_ros)/ros/launch/bringup_robot_example.launch" >
+        <arg name="param_path" value="$(arg param_path)" />
+        <arg name="pybullet_gui" value="$(arg pybullet_gui)" />
+        <arg name="robot_urdf_path" value="$(arg robot_urdf_path)" />
+        <arg name="pause_simulation" value="$(arg pause_simulation)" />
+        <arg name="robot_pose_x" value="$(arg robot_pose_x)" />
+        <arg name="robot_pose_y" value="$(arg robot_pose_y)" />
+        <arg name="robot_pose_z" value="$(arg robot_pose_z)" />
+        <arg name="robot_pose_yaw" value="$(arg robot_pose_yaw)" />
+        <arg name="fixed_base" value="$(arg fixed_base)" />
+        <arg name="world_full_path" value="$(arg world_full_path)" />
+    </include>
+
+</launch>

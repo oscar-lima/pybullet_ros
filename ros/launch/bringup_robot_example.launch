@@ -1,18 +1,19 @@
 <?xml version="1.0"?>
 <launch>
 
-    <!-- Example launch file to bringup any robot with pybullet ros wrapper in a ROS ecosystem -->
+    <!-- Parameterized sample launch file to bringup a robot with pybullet ros wrapper in a ROS ecosystem
+         It launches by default a sample R2D2 robot -->
 
-    <!-- pybullet_ros node parameters -->
-    <arg name="param_path" default="$(find pybullet_ros)/ros/config/pybullet_params.yaml" />
+    <arg name="config_file" default="$(find pybullet_ros)/ros/config/pybullet_params_example.yaml" />
+    <arg name="environment" default="$(find mbot_simulation_environments)/worlds/isr-testbed.world" />
     <arg name="pybullet_gui" default="True" />
-    <arg name="robot_urdf_path" default="$(find pybullet_ros)/common/test/urdf/acrobat_robot.urdf" />
+    <arg name="robot_urdf_path" default="$(find pybullet_ros)/common/test/urdf/r2d2_robot/r2d2.urdf.xacro" />
     <arg name="pause_simulation" default="False" />
     <arg name="robot_pose_x" default="0.0" />
     <arg name="robot_pose_y" default="0.0" />
-    <arg name="robot_pose_z" default="1.0" />
+    <arg name="robot_pose_z" default="0.7" />
     <arg name="robot_pose_yaw" default="0.0" />
-    <arg name="fixed_base" default="True" />
+    <arg name="fixed_base" default="False" />
 
     <!-- upload urdf model to ROS param server -->
     <param name="robot_description"
@@ -23,7 +24,8 @@
 
     <!-- pybullet ros wrapper -->
     <include file="$(find pybullet_ros)/ros/launch/pybullet_ros_example.launch" >
-        <arg name="param_path" value="$(arg param_path)" />
+        <arg name="config_file" value="$(arg config_file)" />
+        <arg name="environment" value="$(arg environment)" />
         <arg name="pybullet_gui" value="$(arg pybullet_gui)" />
         <arg name="robot_urdf_path" value="$(arg robot_urdf_path)" />
         <arg name="pause_simulation" value="$(arg pause_simulation)" />
