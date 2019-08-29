@@ -11,10 +11,11 @@ This project is in a medium stage and presents with the following features:
 - body velocity control - subscription to cmd_vel topic and apply desired speed to the robot (without noise)
 - joint control: Position, velocity and effort control for all revolute joints on the robot
 - sensors: Robot base odometry, joint odometry (joint position, velocity and effort sensors), laser scanner
+- sensor: Camera image
 
 Missing:
 
-- sensors: RGB (image) and RGBD (pointcloud)
+- sensors: Depth information (pointcloud)
 
 Main implementation is done [here](https://github.com/oscar-lima/pybullet_ros/blob/melodic/ros/src/pybullet_ros/pybullet_ros.py)
 
@@ -28,6 +29,11 @@ This wrapper requires that you have pybullet installed, you can do so by executi
 
 Additionally clone this repository inside your [catkin workspace](http://wiki.ros.org/catkin/Tutorials/create_a_workspace),
 compile (catkin build) and source your devel workspace (as you would normally do with any ROS pkg).
+
+In case you need to simulate RGBD sensor then install opencv for python3 and ros cv bridge:
+
+        sudo -H pip3 install opencv-python
+        sudo apt install ros-melodic-cv-bridge
 
 ## Test the simulator
 
@@ -97,6 +103,8 @@ This topic gets listened by the robot state publisher which in turn publishes tf
 
 ```joint_name_xtype_controller/command``` - replace "xtype" with [position, velocity, effort] - Using the control plugin, you can publish
 a joint command on this topic and the robot will forward the instruction to the robot joint.
+
+```rgb_image``` - The camera image of type (sensor_msgs/Image)
 
 ## Services offered by this node
 
