@@ -20,10 +20,10 @@ class RGBDCamera:
         # create image msg placeholder for publication
         self.image_msg = Image()
         # get RGBD camera parameters from ROS param server
-        self.image_msg.height = rospy.get_param('~rgbd_camera/resolution/width', 640)
-        self.image_msg.width = rospy.get_param('~rgbd_camera/resolution/height', 480)
-        assert(self.image_msg.height > 5)
+        self.image_msg.width = rospy.get_param('~rgbd_camera/resolution/width', 640)
+        self.image_msg.height = rospy.get_param('~rgbd_camera/resolution/height', 480)
         assert(self.image_msg.width > 5)
+        assert(self.image_msg.height > 5)
         cam_frame_id = rospy.get_param('~rgbd_camera/frame_id', None)
         if not cam_frame_id:
             rospy.logerr('Required parameter rgbd_camera/frame_id not set, will exit now...')
@@ -42,7 +42,7 @@ class RGBDCamera:
         self.pub_image = rospy.Publisher('rgb_image', Image, queue_size=1)
         self.image_msg.encoding = rospy.get_param('~rgbd_camera/resolution/encoding', 'rgb8')
         self.image_msg.is_bigendian = rospy.get_param('~rgbd_camera/resolution/encoding', 0)
-        self.image_msg.step = rospy.get_param('~rgbd_camera/resolution/encoding', 5760)
+        self.image_msg.step = rospy.get_param('~rgbd_camera/resolution/encoding', 1920)
         # projection matrix
         self.hfov = rospy.get_param('~rgbd_camera/hfov', 56.3)
         self.vfov = rospy.get_param('~rgbd_camera/vfov', 43.7)
