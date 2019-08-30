@@ -1,11 +1,15 @@
 # pybullet plugins, will be loaded during runtime
 plugins: {  pybullet_ros.plugins.control: Control,
-            pybullet_ros.plugins.joint_state_pub: joinStatePub}
+            pybullet_ros.plugins.joint_state_pub: joinStatePub,
+            pybullet_ros.plugins.rgbd_camera: RGBDCamera}
 
-loop_rate:              80.0    # the frequency at which to step sim, default 80 hz
-gravity:                -9.81   # earth gravity
-max_effort_vel_mode:    5000.0    # the max force to apply to the model in vel and position ctrl mode
+loop_rate:              80.0
+gravity:                -9.81
+max_effort_vel_mode:    5000.0
+use_intertia_from_file: False
 
-# True = allow pybullet to compute the inertia tensor based on mass and volume of the collision shape
-# False = you can provide a more accurate inertia tensor, so inertia will be read then from URDF model
-# use_intertia_from_file: False # default: False
+rgbd_camera:
+    frame_id:           tip_link
+    resolution:
+        width:          640
+        height:         480
