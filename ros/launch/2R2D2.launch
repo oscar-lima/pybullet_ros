@@ -1,0 +1,56 @@
+<?xml version="1.0"?>
+<launch>
+
+    <arg name="robot1_name" default="R2D2_1"/>
+    <arg name="robot2_name" default="R2D2_2"/>
+
+    <arg name="robots_name" default="[$(arg robot1_name), $(arg robot2_name)]"/>
+    <arg name="R2D2_1_config_file" default="$(find pybullet_ros)/ros/config/$(arg robot1_name).yaml" />
+    <arg name="R2D2_2_config_file" default="$(find pybullet_ros)/ros/config/$(arg robot2_name).yaml" />
+
+
+    <arg name="environment" default="$(find mbot_simulation_environments)/worlds/isr-testbed.world" />
+    <arg name="pybullet_gui" default="True" />
+    <arg name="pause_simulation" default="False" />
+
+    <!-- default: 80.0, the frequency at which to step sim in hz -->
+    <arg name="loop_rate" default="80.0" />
+    <!-- default: -9.81, earth gravity in m/s^2 -->
+    <arg name="gravity" default="-9.81" />
+    <!-- default: 50.0, the max force to apply to the model in vel mode -->
+    <arg name="max_effort_vel_mode" default="50.0" />
+
+
+    <arg name="R2D2_1_urdf_path" default="$(find pybullet_ros)/common/test/urdf/r2d2_robot/r2d2.urdf.xacro" />
+    <arg name="R2D2_2_urdf_path" default="$(find pybullet_ros)/common/test/urdf/r2d2_robot/r2d2.urdf.xacro" />
+
+    <!-- upload urdf model to ROS param server -->
+    <param name="R2D2_1_description"
+        command="$(find xacro)/xacro --inorder $(arg R2D2_1_urdf_path)" />
+    <param name="R2D2_2_description"
+        command="$(find xacro)/xacro --inorder $(arg R2D2_2_urdf_path)" />
+
+    <!-- robot_state_publisher, publish tf based on /joint_states topic and robot_description param -->
+    <!-- <node pkg="robot_state_publisher" type="robot_state_publisher" name="robot_state_publisher" output="screen" > -->
+    
+
+    <node pkg="pybullet_ros" type="pybullet_ros_node" name="pybullet_ros" output="screen" required="true" >
+        <param name="environment" value="$(arg environment)" />
+        <param name="pybullet_gui" value="$(arg pybullet_gui)" />
+        <param name="pause_simulation" value="$(arg pause_simulation)" />
+        
+        <rosparam param="robots_name" subst_value="True">$(arg robots_name)</rosparam> 
+
+        <rosparam file="$(arg R2D2_1_config_file)" command="load" />
+        <param name="R2D2_1_urdf_path" value="$(arg R2D2_1_urdf_path)" />
+
+        <rosparam file="$(arg R2D2_2_config_file)" command="load" />
+        <param name="R2D2_2_urdf_path" value="$(arg R2D2_2_urdf_path)" />
+
+
+    </node>
+
+    <!-- odom tf publisher -->
+    <!-- <node pkg="pybullet_ros" type="odom_tf.py" name="odom_tf_broadcaster" output="screen" /> -->
+
+</launch>

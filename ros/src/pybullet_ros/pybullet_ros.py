@@ -31,21 +31,23 @@ class pyBulletRosWrapper(object):
         self.pb.setAdditionalSearchPath(pybullet_data.getDataPath())
         # set gravity, and ground plane
         self.create_environment()
+        # import plugins dynamically
+        self.plugins = []
         # load robots URDF model 
         self.robots_name = [str(x) for x in rospy.get_param('~robots_name', ["robot"])]
         for robotName in self.robots_name:
-            self.robot = self.init_pybullet_robot(robotName)
+            print(robotName)
+            robot = self.init_pybullet_robot(robotName)
             self.connected_to_physics_server = None
-            if not self.robot:
+            if not robot:
                 self.connected_to_physics_server = False
                 return # Error while loading urdf file
             else:
                 self.connected_to_physics_server = True
             # get all revolute joint names and pybullet index
-            rev_joint_index_name_dic, fixed_joint_index_name_dic, link_names_to_ids_dic = self.get_properties()
-            # import plugins dynamically
-            self.plugins = []
-            dic = rospy.get_param('~plugins', {})
+            rev_joint_index_name_dic, fixed_joint_index_name_dic, link_names_to_ids_dic = self.get_properties(robot)
+            
+            dic = rospy.get_param('~{}_plugins'.format(robotName), {})
             if not dic:
                 rospy.logwarn('No plugins found, forgot to set param ~plugins?')
             # return to normal shell color
@@ -53,7 +55,7 @@ class pyBulletRosWrapper(object):
             for key in dic:
                 rospy.loginfo('loading plugin: %s class from %s', dic[key], key)
                 # create object of the imported file class
-                obj = getattr(importlib.import_module(key), dic[key])(self.pb, self.robot,
+                obj = getattr(importlib.import_module(key), dic[key])(self.pb, robot, robotName,
                             rev_joints=rev_joint_index_name_dic,
                             fixed_joints=fixed_joint_index_name_dic,
                             link_ids=link_names_to_ids_dic)
@@ -61,7 +63,7 @@ class pyBulletRosWrapper(object):
                 self.plugins.append(obj)
         rospy.loginfo('pybullet ROS wrapper initialized')
 
-    def get_properties(self):
+    def get_properties(self, robot):
         """
         construct 3 dictionaries:
         - joint index to joint name x2 (1 for revolute, 1 for fixed joints)
@@ -70,8 +72,8 @@ class pyBulletRosWrapper(object):
         rev_joint_index_name_dic = {}
         fixed_joint_index_name_dic = {}
         link_names_to_ids_dic = {}
-        for joint_index in range(0, self.pb.getNumJoints(self.robot)):
-            info = self.pb.getJointInfo(self.robot, joint_index)
+        for joint_index in range(0, self.pb.getNumJoints(robot)):
+            info = self.pb.getJointInfo(robot, joint_index)
             # build a dictionary of link names to ids
             link_names_to_ids_dic[info[12].decode('utf-8')] = joint_index
             # ensure we are dealing with a revolute joint
@@ -138,6 +140,7 @@ class pyBulletRosWrapper(object):
         """load robot URDF model"""
         # get from param server the path to the URDF robot model to load at startup
         urdf_path = rospy.get_param('~{}_urdf_path'.format(robotName), None)
+        print(urdf_path)
         if urdf_path == None:
             rospy.signal_shutdown('mandatory param {}_urdf_path not set, will exit now'.format(robotName))
         # test urdf file existance

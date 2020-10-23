@@ -24,7 +24,7 @@ class cmdVelCtrl:
         # subscribe to robot velocity commands
         self.cmd_vel_msg = None
         self.received_cmd_vel_time = None
-        rospy.Subscriber("cmd_vel", Twist, self.cmdVelCB)
+        rospy.Subscriber("{}_cmd_vel".format(robotName), Twist, self.cmdVelCB)
 
     # ---------- tf stuff starts
 

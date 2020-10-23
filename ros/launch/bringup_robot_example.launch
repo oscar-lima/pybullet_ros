@@ -13,14 +13,16 @@
     <arg name="robot_pose_y" default="0.0" />
     <arg name="robot_pose_z" default="0.7" />
     <arg name="robot_pose_yaw" default="0.0" />
-    <arg name="fixed_base" default="False" />
+    <arg name="robot_fixed_base" default="False" />
 
     <!-- upload urdf model to ROS param server -->
     <param name="robot_description"
            command="$(find xacro)/xacro --inorder $(arg robot_urdf_path)" />
 
     <!-- robot_state_publisher, publish tf based on /joint_states topic and robot_description param -->
-    <node pkg="robot_state_publisher" type="robot_state_publisher" name="robot_state_publisher" output="screen" />
+    <!-- <node pkg="robot_state_publisher" type="robot_state_publisher" name="robot_state_publisher" output="screen" >
+        <remap from="joint_states" to="robot_joint_states" />
+    </node> -->
 
     <!-- pybullet ros wrapper -->
     <include file="$(find pybullet_ros)/ros/launch/pybullet_ros_example.launch" >
@@ -33,10 +35,10 @@
         <arg name="robot_pose_y" value="$(arg robot_pose_y)" />
         <arg name="robot_pose_z" value="$(arg robot_pose_z)" />
         <arg name="robot_pose_yaw" value="$(arg robot_pose_yaw)" />
-        <arg name="fixed_base" value="$(arg fixed_base)" />
+        <arg name="robot_fixed_base" value="$(arg robot_fixed_base)" />
     </include>
 
     <!-- odom tf publisher -->
-    <node pkg="pybullet_ros" type="odom_tf.py" name="odom_tf_broadcaster" output="screen" />
+    <!-- <node pkg="pybullet_ros" type="odom_tf.py" name="odom_tf_broadcaster" output="screen" /> -->
 
 </launch>
