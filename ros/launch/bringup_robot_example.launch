@@ -20,9 +20,11 @@
            command="$(find xacro)/xacro --inorder $(arg robot_urdf_path)" />
 
     <!-- robot_state_publisher, publish tf based on /joint_states topic and robot_description param -->
-    <!-- <node pkg="robot_state_publisher" type="robot_state_publisher" name="robot_state_publisher" output="screen" >
+    <node pkg="robot_state_publisher" type="robot_state_publisher" name="robot_state_publisher" output="screen" >
+        <remap from="tf" to="robot_tf" />
+        <remap from="tf_static" to="robot_tf_static" />
         <remap from="joint_states" to="robot_joint_states" />
-    </node> -->
+    </node>
 
     <!-- pybullet ros wrapper -->
     <include file="$(find pybullet_ros)/ros/launch/pybullet_ros_example.launch" >
