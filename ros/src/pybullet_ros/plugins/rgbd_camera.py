@@ -12,7 +12,7 @@ from cv_bridge import CvBridge
 from sensor_msgs.msg import Image
 
 class RGBDCamera:
-    def __init__(self, pybullet, robot, **kargs):
+    def __init__(self, pybullet, robot, robotName, **kargs):
         # get "import pybullet as pb" and store in self.pb
         self.pb = pybullet
         # get robot from parent class
@@ -20,11 +20,11 @@ class RGBDCamera:
         # create image msg placeholder for publication
         self.image_msg = Image()
         # get RGBD camera parameters from ROS param server
-        self.image_msg.width = rospy.get_param('~rgbd_camera/resolution/width', 640)
-        self.image_msg.height = rospy.get_param('~rgbd_camera/resolution/height', 480)
+        self.image_msg.width = rospy.get_param('~{}_rgbd_camera/resolution/width'.format(robotName), 640)
+        self.image_msg.height = rospy.get_param('~{}_rgbd_camera/resolution/height'.format(robotName), 480)
         assert(self.image_msg.width > 5)
         assert(self.image_msg.height > 5)
-        cam_frame_id = rospy.get_param('~rgbd_camera/frame_id', None)
+        cam_frame_id = rospy.get_param('~{}_rgbd_camera/frame_id'.format(robotName), None)
         if not cam_frame_id:
             rospy.logerr('Required parameter rgbd_camera/frame_id not set, will exit now...')
             rospy.signal_shutdown('Required parameter rgbd_camera/frame_id not set')
@@ -39,15 +39,15 @@ class RGBDCamera:
         self.pb_camera_link_id = link_names_to_ids_dic[cam_frame_id]
         self.image_msg.header.frame_id = cam_frame_id
         # create publisher
-        self.pub_image = rospy.Publisher('rgb_image', Image, queue_size=1)
-        self.image_msg.encoding = rospy.get_param('~rgbd_camera/resolution/encoding', 'rgb8')
-        self.image_msg.is_bigendian = rospy.get_param('~rgbd_camera/resolution/encoding', 0)
-        self.image_msg.step = rospy.get_param('~rgbd_camera/resolution/encoding', 1920)
+        self.pub_image = rospy.Publisher('{}_rgb_image'.format(robotName), Image, queue_size=1)
+        self.image_msg.encoding = rospy.get_param('~{}_rgbd_camera/resolution/encoding'.format(robotName), 'rgb8')
+        self.image_msg.is_bigendian = rospy.get_param('~{}_rgbd_camera/resolution/encoding'.format(robotName), 0)
+        self.image_msg.step = rospy.get_param('~{}_rgbd_camera/resolution/encoding'.format(robotName), 1920)
         # projection matrix
-        self.hfov = rospy.get_param('~rgbd_camera/hfov', 56.3)
-        self.vfov = rospy.get_param('~rgbd_camera/vfov', 43.7)
-        self.near_plane = rospy.get_param('~rgbd_camera/near_plane', 0.4)
-        self.far_plane = rospy.get_param('~rgbd_camera/far_plane', 8)
+        self.hfov = rospy.get_param('~{}_rgbd_camera/hfov'.format(robotName), 56.3)
+        self.vfov = rospy.get_param('~{}_rgbd_camera/vfov'.format(robotName), 43.7)
+        self.near_plane = rospy.get_param('~{}_rgbd_camera/near_plane'.format(robotName), 0.4)
+        self.far_plane = rospy.get_param('~{}_rgbd_camera/far_plane'.format(robotName), 8)
         self.projection_matrix = self.compute_projection_matrix()
         # use cv_bridge ros to convert cv matrix to ros format
         self.image_bridge = CvBridge()

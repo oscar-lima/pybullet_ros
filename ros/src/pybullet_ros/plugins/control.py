@@ -51,7 +51,7 @@ class pveControl:
 
 # plugin is implemented below
 class Control:
-    def __init__(self, pybullet, robot, **kargs):
+    def __init__(self, pybullet, robot, robotName, **kargs):
         # get "import pybullet as pb" and store in self.pb
         self.pb = pybullet
         # get robot from parent class
@@ -61,7 +61,7 @@ class Control:
         self.velocity_joint_commands = []
         self.effort_joint_commands = []
         # this parameter will be set for all robot joints
-        max_effort_vel_mode = rospy.get_param('~max_effort_vel_mode', 50.0)
+        max_effort_vel_mode = rospy.get_param('~{}_max_effort_vel_mode'.format(robotName), 50.0)
         # the max force to apply to the joint, used in velocity control
         self.force_commands = []
         # get joints names and store them in dictionary
