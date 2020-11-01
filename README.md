@@ -2,7 +2,7 @@
 
 A bridge between [ROS](www.ros.org) and [PyBullet](https://github.com/bulletphysics/bullet3)
 
-![robot](https://github.com/oscar-lima/pybullet_ros/blob/melodic/common/images/r2d2_rviz.png "R2 D2 in ROS")
+![robot](https://github.com/oscar-lima/pybullet_ros/blob/noetic/common/images/r2d2_rviz.png "R2 D2 in ROS")
 
 # Project status
 
@@ -17,11 +17,11 @@ Missing:
 
 - sensors: Depth information (pointcloud)
 
-Main implementation is done [here](https://github.com/oscar-lima/pybullet_ros/blob/melodic/ros/src/pybullet_ros/pybullet_ros.py)
+Main implementation is done [here](https://github.com/oscar-lima/pybullet_ros/blob/noetic/ros/src/pybullet_ros/pybullet_ros.py)
 
 ## Installation
 
-The following instructions have been tested under ubuntu 16.04, 18.04 and kinetic, melodic ROS distributions.
+The following instructions have been tested under ubuntu 16.04, 18.04 and kinetic, noetic ROS distributions.
 
 This wrapper requires that you have pybullet installed, you can do so by executing:
 
@@ -33,11 +33,11 @@ compile (catkin build) and source your devel workspace (as you would normally do
 In case you need to simulate RGBD sensor then install opencv for python3 and ros cv bridge:
 
         sudo -H pip3 install opencv-python
-        sudo apt install ros-melodic-cv-bridge
+        sudo apt install ros-noetic-cv-bridge
 
 ## Test the simulator
 
-We provide with 2 robots for testing purposes: acrobat and r2d2, they can be found [here](https://github.com/oscar-lima/pybullet_ros/tree/melodic/common/test/urdf).
+We provide with 2 robots for testing purposes: acrobat and r2d2, they can be found [here](https://github.com/oscar-lima/pybullet_ros/tree/noetic/common/test/urdf).
 
 ### Bringup r2d2 robot
 
@@ -154,9 +154,9 @@ NOTE: max_effort_vel_mode parameter is ignored when position or effort commands 
 # Plugin creation
 
 NOTE: Before creating a pybullet_ros plugin, make sure your plugin does not exist already
-[check available pybullet_ros plugins here](https://github.com/oscar-lima/pybullet_ros/tree/melodic/ros/src/pybullet_ros/plugins).
+[check available pybullet_ros plugins here](https://github.com/oscar-lima/pybullet_ros/tree/noetic/ros/src/pybullet_ros/plugins).
 
-To ease the process, we provide with a template [here](https://github.com/oscar-lima/pybullet_ros/blob/melodic/ros/src/pybullet_ros/plugins/plugin_template.py).
+To ease the process, we provide with a template [here](https://github.com/oscar-lima/pybullet_ros/blob/noetic/ros/src/pybullet_ros/plugins/plugin_template.py).
 
 Copy the template and follow this instructions:
 
