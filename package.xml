@@ -1,18 +1,19 @@
 <?xml version="1.0"?>
 <package>
     <name>pybullet_ros</name>
-    <version>1.0.0</version>
+    <version>2.0.0</version>
     <description>
         ROS wrapper for pybullet simulator
     </description>
 
     <license>MIT</license>
 
-    <author email="olima_84@yahoo.com">Oscar Lima</author>
-    <maintainer email="olima_84@yahoo.com">Oscar Lima</maintainer>
+    <author email="oscar.lima@dfki.de">Oscar Lima</author>
+    <maintainer email="oscar.lima@dfki.de">Oscar Lima</maintainer>
 
     <buildtool_depend>catkin</buildtool_depend>
     <run_depend>std_msgs</run_depend>
     <run_depend>cv_bridge</run_depend>
+    <run_depend>joint_state_publisher_gui</run_depend>
 
 </package>
