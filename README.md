@@ -1,6 +1,6 @@
 # pybullet_ros
 
-A bridge between [ROS](www.ros.org) and [PyBullet](https://github.com/bulletphysics/bullet3)
+A bridge between [ROS](https://www.ros.org/) and [PyBullet](https://github.com/bulletphysics/bullet3)
 
 ![robot](https://github.com/oscar-lima/pybullet_ros/blob/noetic/common/images/r2d2_rviz.png "R2 D2 in ROS")
 
