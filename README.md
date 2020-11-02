@@ -1,6 +1,6 @@
 # pybullet_ros
 
-A bridge between [ROS](https://www.ros.org/) and [PyBullet](https://github.com/bulletphysics/bullet3)
+A bridge between [ROS1](https://www.ros.org/) and [PyBullet](https://pybullet.org/wordpress/)
 
 ![robot](https://github.com/oscar-lima/pybullet_ros/blob/noetic/common/images/r2d2_rviz.png "R2 D2 in ROS")
 
@@ -8,10 +8,9 @@ A bridge between [ROS](https://www.ros.org/) and [PyBullet](https://github.com/b
 
 This project is in a medium stage and presents with the following features:
 
-- body velocity control - subscription to cmd_vel topic and apply desired speed to the robot (without noise)
-- joint control: Position, velocity and effort control for all revolute joints on the robot
-- sensors: Robot base odometry, joint odometry (joint position, velocity and effort sensors), laser scanner
-- sensor: Camera image
+- body velocity control - Subscription to cmd_vel topic and apply desired speed to the robot (without noise)
+- joint control: Joint Position, velocity and effort control for all revolute joints on the robot
+- sensors: Odometry, joint states (joint position, velocity and effort feedback), laser scanner, RGB camera image
 
 Missing:
 
@@ -21,7 +20,7 @@ Main implementation is done [here](https://github.com/oscar-lima/pybullet_ros/bl
 
 ## Installation
 
-The following instructions have been tested under ubuntu 20.04 and ROS noetic.
+The following instructions have been tested under ubuntu 20.04 and [ROS noetic](http://wiki.ros.org/noetic/Installation/Ubuntu).
 
 This wrapper requires that you have pybullet installed, you can do so by executing:
 
@@ -51,33 +50,33 @@ You should now be able to visualise the robot in a gui.
 
 Publish a float msg to the following topic:
 
-        rostopic pub /joint1_position_controller/command std_msgs/Float64 "data: 1.0" --once
+        rostopic pub /head_swivel_position_controller/command std_msgs/Float64 "data: 1.0" --once
 
 Move in position control with convenient gui:
 
-        rosrun pybullet_ros joint_state_publisher
+        roslaunch pybullet_ros position_cmd_gui.launch
 
-A gui should pop up, use the slides to control the angle of your robot joints in position control.
+A gui will pop up, use the slides to control the angle of your robot joints in position control.
 
-NOTE: This gui should not be active if using velocity of effort commands!
+NOTE: This gui should not be active while sending velocity of effort commands!
 
-### Send velocity or effort (torque) control commands to the robot.
+### Send joint velocity or effort (torque) control commands to the robot.
 
-NOTE: The example robot r2d2 head represents the only revolute joint in the system and can be used to test
+NOTE: r2d2 robot has a revolute joint in the neck that can be used to test
 
 position, velocity or effort commands as described below in the following lines:
 
-Before sending commands, make sure position control interface gui publisher is not running (pybullet_ros -> joint_state_publisher)
+Before sending commands, make sure position control interface gui publisher is not running!
 
 Publish a float msg to the following topics:
 
 velocity controller interface:
 
-        rostopic pub /joint1_velocity_controller/command std_msgs/Float64 "data: 2.0" --once
+        rostopic pub /head_swivel_velocity_controller/command std_msgs/Float64 "data: 2.0" --once
 
 effort controller interface:
 
-        rostopic pub /joint1_effort_controller/command std_msgs/Float64 "data: 2000.0" --once
+        rostopic pub /head_swivel_effort_controller/command std_msgs/Float64 "data: -2000.0" --once
 
 Done. The robot should now move in velocity or effort control mode with the desired speed/torque.
 
@@ -93,18 +92,19 @@ A convenient configuration file is provided for the visualization of the example
 parameter frequency (see parameters section for more detail).
 This topic gets listened by the robot state publisher which in turn publishes tf data to the ROS ecosystem.
 
-```tf``` - This wrapper broadcats all robot transformations to tf, using the robot state publisher and custom plugins.
+```/tf``` - This wrapper broadcats all robot transformations to tf, using the robot state publisher and custom plugins.
 
-```scan```- Using the lidar plugin you get laser scanner readings of type sensor_msgs/LaserScan.
+```/scan```- Using the lidar plugin you get laser scanner readings of type sensor_msgs/LaserScan.
 
-```odom``` - Using the odometry plugin, robot body odometry gets published (nav_msgs/Odometry).
+```/odom``` - Using the odometry plugin, robot body odometry gets published (nav_msgs/Odometry).
 
 ```/cmd_vel``` - Using the body_vel_control plugin, the robot will subscribe to cmd_vel and exert the desired velocity to the robot.
 
-```joint_name_xtype_controller/command``` - replace "xtype" with [position, velocity, effort] - Using the control plugin, you can publish
-a joint command on this topic and the robot will forward the instruction to the robot joint.
+```<joint_name>_<xtype>_controller/command``` - replace "joint_name" with actual joint name and "xtype"
+with [position, velocity, effort] - Using the control plugin, you can publish a joint command on this topic
+and the robot will forward the instruction to the robot joint.
 
-```rgb_image``` - The camera image of type (sensor_msgs/Image)
+```/rgb_image``` - The camera image of type (sensor_msgs/Image)
 
 ## Services offered by this node
 
@@ -137,8 +137,6 @@ The following parameters can be used to customize the behavior of the simulator.
 
 ```~use_intertia_from_file``` - if True pybullet will compute the inertia tensor based on mass and volume of the collision shape, default: False
 
-```~environment``` - Load a world file, which is a collection of sdf objects, default: Empty world
-
 ```~robot_pose_x``` - The position where to spawn the robot in the world in m, default: 0.0
 
 ```~robot_pose_y``` - The position where to spawn the robot in the world in m, default: 0.0
@@ -151,7 +149,23 @@ The following parameters can be used to customize the behavior of the simulator.
 
 NOTE: max_effort_vel_mode parameter is ignored when position or effort commands are given.
 
+Experimental (does not work at the moment) :
+
+```~environment``` - (work in progress) Load a world file, which is a collection of sdf objects, default: Empty world
+
+# pybullet ros plugins
+
+What is a pybullet ros plugin?
+
+At the core of pybullet ros, we have the following workflow:
+
+![robot](https://github.com/oscar-lima/pybullet_ros/blob/noetic/common/images/main_loop.png "pybullet ros main loop")
+
+If you see, basically we iterate over all registered plugins and we run their execute function in a loop, afterwards we step the simulation
+
 # Plugin creation
+
+This section shows you how you can create your own plugin, to extend this library with your own needs.
 
 NOTE: Before creating a pybullet_ros plugin, make sure your plugin does not exist already
 [check available pybullet_ros plugins here](https://github.com/oscar-lima/pybullet_ros/tree/noetic/ros/src/pybullet_ros/plugins).
@@ -164,7 +178,7 @@ Copy the template and follow this instructions:
 
 2. add it  to param server
 
-    roscd pybullet_ros/ros/config && gedit pybullet_params.yaml
+    roscd pybullet_ros/ros/config && gedit pybullet_params_example.yaml
 
 Extend "plugins" param to add yours, e.g:
 
@@ -193,3 +207,11 @@ teach new users about URDF, however is missing collision and inertia tags. Anoth
 [data folder](https://github.com/bulletphysics/bullet3/blob/master/data/r2d2.urdf) but that model does not follow
 [ROS conventions](https://www.ros.org/reps/rep-0103.html#axis-orientation), in particular "x" axis moves the robot forward and "y" axis moves it to the left.
 We have created our own r2d2 and included a lidar on its base to be able to test the laser scanner plugin.
+
+## Wait a second... bullet is already integrated in gazebo. Why do I need this repository at all?
+
+Well thats true, bullet is integrated in gazebo, they have much more plugins available and their api runs much faster as it is implemented in C++.
+
+I myself also use gazebo on a daily basis! , however probably some reasons why this repository be useful are because is very easy and fast to configure a rapid prototype.
+
+Your urdf model does not need to be extended with gazebo tags, installation is extremely easy from pypi and there are lots of examples in pybullet available (see [here](https://github.com/bulletphysics/bullet3/tree/master/examples/pybullet/examples). Additionally, its in python! so is easier and faster to develop + the pybullet documentation is better.
