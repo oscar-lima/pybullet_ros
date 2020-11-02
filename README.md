@@ -2,7 +2,7 @@
 
 A bridge between [ROS1](https://www.ros.org/) and [PyBullet](https://pybullet.org/wordpress/)
 
-![robot](https://github.com/oscar-lima/pybullet_ros/blob/noetic/common/images/r2d2_rviz.png "R2 D2 in ROS")
+<img src="https://github.com/oscar-lima/pybullet_ros/blob/noetic/common/images/r2d2_rviz.png" alt="drawing" width="600"/>
 
 # Project status
 
@@ -159,9 +159,9 @@ What is a pybullet ros plugin?
 
 At the core of pybullet ros, we have the following workflow:
 
-![robot](https://github.com/oscar-lima/pybullet_ros/blob/noetic/common/images/main_loop.png "pybullet ros main loop")
+<img src="https://github.com/oscar-lima/pybullet_ros/blob/noetic/common/images/main_loop.png" alt="drawing" width="200"/>
 
-If you see, basically we iterate over all registered plugins and we run their execute function in a loop, afterwards we step the simulation
+Basically we iterate over all registered plugins, run their execute function, and after doing it for all plugins we step the simulation one time step.
 
 # Plugin creation
 
