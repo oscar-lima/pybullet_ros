@@ -15,6 +15,7 @@ This project is in a medium stage and presents with the following features:
 Missing:
 
 - sensors: Depth information (pointcloud)
+- [sdf](http://sdformat.org) support
 
 Main implementation is done [here](https://github.com/oscar-lima/pybullet_ros/blob/noetic/ros/src/pybullet_ros/pybullet_ros.py)
 
