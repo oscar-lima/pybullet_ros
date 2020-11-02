@@ -19,6 +19,6 @@
     </include>
 
     <!-- qt gui to control robot using side bars -->
-    <node pkg="pybullet_ros" type="joint_state_publisher" name="gui_robot_control" output="screen" />
+    <include file="$(find pybullet_ros)/ros/launch/tools/position_cmd_gui.launch" >
 
 </launch>
