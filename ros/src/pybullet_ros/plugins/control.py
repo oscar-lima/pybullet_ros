@@ -7,7 +7,7 @@ position, velocity and effort control for all revolute joints on the robot
 import rospy
 from std_msgs.msg import Float64
 
-# NOTE: 2 classes are implemented here, jumpt to the next one to see the plugin!
+# NOTE: 2 classes are implemented here, scroll down to the next class (Control) to see the plugin!
 
 class pveControl:
     """helper class to receive position, velocity or effort (pve) control commands"""
