@@ -21,7 +21,7 @@ Main implementation is done [here](https://github.com/oscar-lima/pybullet_ros/bl
 
 ## Installation
 
-The following instructions have been tested under ubuntu 16.04, 18.04 and kinetic, noetic ROS distributions.
+The following instructions have been tested under ubuntu 20.04 and ROS noetic.
 
 This wrapper requires that you have pybullet installed, you can do so by executing:
 
