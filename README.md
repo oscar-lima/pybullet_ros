@@ -214,4 +214,4 @@ Well thats true, bullet is integrated in gazebo, they have much more plugins ava
 
 I myself also use gazebo on a daily basis! , however probably some reasons why this repository be useful are because is very easy and fast to configure a rapid prototype.
 
-Your urdf model does not need to be extended with gazebo tags, installation is extremely easy from pypi and there are lots of examples in pybullet available (see [here](https://github.com/bulletphysics/bullet3/tree/master/examples/pybullet/examples). Additionally, its in python! so is easier and faster to develop + the pybullet documentation is better.
+Your urdf model does not need to be extended with gazebo tags, installation is extremely easy from pypi and there are lots of examples in pybullet available (see [here](https://github.com/bulletphysics/bullet3/tree/master/examples/pybullet/examples)). Additionally, its in python! so is easier and faster to develop + the pybullet documentation is better.
