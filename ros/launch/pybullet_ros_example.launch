@@ -9,6 +9,7 @@
     <arg name="pybullet_gui" default="True" /> <!-- if true pybullet gui will pop -->
     <arg name="robot_urdf_path" default="$(find pybullet_ros)/common/test/urdf/r2d2/r2d2.urdf" />
     <arg name="pause_simulation" default="False" /> <!-- if true, will boot with paused physics -->
+    <arg name="parallel_plugin_execution" default="True" />
     <arg name="robot_pose_x" default="0.0" /> <!-- robot spawn pose is set here -->
     <arg name="robot_pose_y" default="0.0" />
     <arg name="robot_pose_z" default="1.0" />
@@ -22,6 +23,7 @@
         <param name="pybullet_gui" value="$(arg pybullet_gui)" />
         <param name="robot_urdf_path" value="$(arg robot_urdf_path)" />
         <param name="pause_simulation" value="$(arg pause_simulation)" />
+        <param name="parallel_plugin_execution" value="$(arg parallel_plugin_execution)" />
         <param name="robot_pose_x" value="$(arg robot_pose_x)" />
         <param name="robot_pose_y" value="$(arg robot_pose_y)" />
         <param name="robot_pose_z" value="$(arg robot_pose_z)" />

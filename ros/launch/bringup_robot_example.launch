@@ -9,6 +9,7 @@
     <arg name="pybullet_gui" default="True" />
     <arg name="robot_urdf_path" default="$(find pybullet_ros)/common/test/urdf/r2d2_robot/r2d2.urdf.xacro" />
     <arg name="pause_simulation" default="False" />
+    <arg name="parallel_plugin_execution" default="True" />
     <arg name="robot_pose_x" default="0.0" />
     <arg name="robot_pose_y" default="0.0" />
     <arg name="robot_pose_z" default="0.7" />
@@ -17,7 +18,7 @@
 
     <!-- upload urdf model to ROS param server -->
     <param name="robot_description"
-           command="$(find xacro)/xacro --inorder $(arg robot_urdf_path)" />
+           command="$(find xacro)/xacro $(arg robot_urdf_path)" />
 
     <!-- robot_state_publisher, publish tf based on /joint_states topic and robot_description param -->
     <node pkg="robot_state_publisher" type="robot_state_publisher" name="robot_state_publisher" output="screen" />
@@ -29,6 +30,7 @@
         <arg name="pybullet_gui" value="$(arg pybullet_gui)" />
         <arg name="robot_urdf_path" value="$(arg robot_urdf_path)" />
         <arg name="pause_simulation" value="$(arg pause_simulation)" />
+        <arg name="parallel_plugin_execution" value="$(arg parallel_plugin_execution)" />
         <arg name="robot_pose_x" value="$(arg robot_pose_x)" />
         <arg name="robot_pose_y" value="$(arg robot_pose_y)" />
         <arg name="robot_pose_z" value="$(arg robot_pose_z)" />

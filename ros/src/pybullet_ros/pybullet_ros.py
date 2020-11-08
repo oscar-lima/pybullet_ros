@@ -7,6 +7,7 @@ import pybullet_data
 import pybullet_ros.sdf.sdf_parser as sdf_parser
 
 from std_srvs.srv import Empty
+from pybullet_ros.function_exec_manager import FuncExecManager
 
 class pyBulletRosWrapper(object):
     """ROS wrapper class for pybullet simulator"""
@@ -14,7 +15,7 @@ class pyBulletRosWrapper(object):
         # import pybullet
         self.pb = importlib.import_module('pybullet')
         # get from param server the frequency at which to run the simulation
-        self.loop_rate = rospy.Rate(rospy.get_param('~loop_rate', 80.0))
+        self.loop_rate = rospy.get_param('~loop_rate', 80.0)
         # query from param server if gui is needed
         is_gui_needed = rospy.get_param('~pybullet_gui', True)
         # get from param server if user wants to pause simulation at startup
@@ -212,13 +213,14 @@ class pyBulletRosWrapper(object):
         self.pause_simulation = True
         return []
 
-    def start_pybullet_ros_wrapper(self):
-        """main simulation control cycle:
-        1) check if position, velocity or effort commands are available, if so, forward to pybullet
-        2) query joints state (current position, velocity and effort) and publish to ROS
-        3) perform a step in pybullet simulation
-        4) sleep to control the frequency of the node
+    def pause_simulation_function(self):
+        return self.pause_simulation
+
+    def start_pybullet_ros_wrapper_sequential(self):
         """
+        This function is deprecated, we recommend the use of parallel plugin execution
+        """
+        rate = rospy.Rate(self.loop_rate)
         while not rospy.is_shutdown():
             if not self.pause_simulation:
                 # run x plugins
@@ -227,11 +229,32 @@ class pyBulletRosWrapper(object):
                 # perform all the actions in a single forward dynamics simulation step such
                 # as collision detection, constraint solving and integration
                 self.pb.stepSimulation()
-            self.loop_rate.sleep()
+            rate.sleep()
         rospy.logwarn('killing node now...')
         # if node is killed, disconnect
         if self.connected_to_physics_server:
             self.pb.disconnect()
+
+    def start_pybullet_ros_wrapper_parallel(self):
+        """
+        Execute plugins in parallel, however watch their execution time and warn if exceeds the deadline (loop rate)
+        """
+        # create object of our parallel execution manager
+        exec_manager_obj = FuncExecManager(self.plugins, rospy.is_shutdown, self.pb.stepSimulation, self.pause_simulation_function,
+                                           log_info=rospy.loginfo, log_warn=rospy.logwarn, log_debug=rospy.logdebug)
+        # start parallel execution of all "execute" class methods in a synchronous way
+        exec_manager_obj.start_synchronous_execution(loop_rate=self.loop_rate)
+        # ctrl + c was pressed, exit
+        rospy.logwarn('killing node now...')
+        # if node is killed, disconnect
+        if self.connected_to_physics_server:
+            self.pb.disconnect()
+
+    def start_pybullet_ros_wrapper(self):
+        if rospy.get_param('~parallel_plugin_execution', True):
+            self.start_pybullet_ros_wrapper_parallel()
+        else:
+            self.start_pybullet_ros_wrapper_sequential()
 
 def main():
     """function called by pybullet_ros_node script"""
