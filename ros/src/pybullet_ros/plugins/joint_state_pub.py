@@ -8,7 +8,7 @@ import rospy
 from sensor_msgs.msg import JointState
 
 class joinStatePub:
-    def __init__(self, pybullet, robot, **kargs):
+    def __init__(self, pybullet, robot, robotName,**kargs):
         # get "import pybullet as pb" and store in self.pb
         self.pb = pybullet
         # get robot from parent class
@@ -16,7 +16,7 @@ class joinStatePub:
         # get joints names and store them in dictionary
         self.joint_index_name_dic = kargs['rev_joints']
         # register this node in the network as a publisher in /joint_states topic
-        self.pub_joint_states = rospy.Publisher('joint_states', JointState, queue_size=1)
+        self.pub_joint_states = rospy.Publisher('{}_joint_states'.format(robotName), JointState, queue_size=1)
 
     def execute(self):
         """this function gets called from pybullet ros main update loop"""

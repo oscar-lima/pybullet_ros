@@ -9,17 +9,17 @@ import rospy
 from nav_msgs.msg import Odometry
 
 class simpleOdometry:
-    def __init__(self, pybullet, robot, **kargs):
+    def __init__(self, pybullet, robot, robotName, **kargs):
         # get "import pybullet as pb" and store in self.pb
         self.pb = pybullet
         # get robot from parent class
         self.robot = robot
         # register this node as a /odom publisher
-        self.pub_odometry = rospy.Publisher('odom', Odometry, queue_size=1)
+        self.pub_odometry = rospy.Publisher('{}_odom'.format(robotName), Odometry, queue_size=1)
         # save some overhead by setting some information only once
         self.odom_msg = Odometry()
-        self.odom_msg.header.frame_id = rospy.get_param('~odom_frame', 'odom')
-        self.odom_msg.child_frame_id = rospy.get_param('~robot_base_frame', 'base_link')
+        self.odom_msg.header.frame_id = rospy.get_param('~{}_odom_frame'.format(robotName), 'odom')
+        self.odom_msg.child_frame_id = rospy.get_param('~{}_robot_base_frame'.format(robotName), 'base_link')
 
     def execute(self):
         """this function gets called from pybullet ros main update loop"""

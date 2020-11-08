@@ -16,7 +16,7 @@ import numpy as np
 from geometry_msgs.msg import Twist, Vector3Stamped, Vector3
 
 class cmdVelCtrl:
-    def __init__(self, pybullet, robot, **kargs):
+    def __init__(self, pybullet, robot, robotName, **kargs):
         # get "import pybullet as pb" and store in self.pb
         self.pb = pybullet
         # get robot from parent class
@@ -24,7 +24,7 @@ class cmdVelCtrl:
         # subscribe to robot velocity commands
         self.cmd_vel_msg = None
         self.received_cmd_vel_time = None
-        rospy.Subscriber("cmd_vel", Twist, self.cmdVelCB)
+        rospy.Subscriber("{}_cmd_vel".format(robotName), Twist, self.cmdVelCB)
 
     # ---------- tf stuff starts
 

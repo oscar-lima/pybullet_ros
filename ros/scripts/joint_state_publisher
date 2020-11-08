@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python2
 
 import rospy
 import random
@@ -9,6 +9,7 @@ from sensor_msgs.msg import JointState
 from math import pi
 from threading import Thread
 from std_msgs.msg import Float64
+import sys
 
 RANGE = 10000
 
@@ -22,8 +23,8 @@ def get_param(name, value=None):
         return value
 
 class JointStatePublisher():
-    def __init__(self):
-        description = get_param('robot_description')
+    def __init__(self, robotName):
+        description = get_param('{}_description'.format(robotName))
         robot = xml.dom.minidom.parseString(description).getElementsByTagName('robot')[0]
         self.free_joints = {}
         self.joint_list = [] # for maintaining the original order of the joints
@@ -98,7 +99,7 @@ class JointStatePublisher():
 
         # subscribe to joint states to initialize gui slides one time only
         self.joint_state_msg = None
-        sub_once = rospy.Subscriber("/joint_states", JointState, self.jointStatesCallback, queue_size=1)
+        sub_once = rospy.Subscriber("/{}_joint_states".format(robotName), JointState, self.jointStatesCallback, queue_size=1)
         
         # wait until msg arrives
         rospy.loginfo('waiting for /joint_states topic (one time only to initialize arm with current values)')
@@ -134,7 +135,7 @@ class JointStatePublisher():
         rospy.loginfo('hacked joint state publisher will actuate joints in the following topics:')
         for i, joint_name in enumerate(self.joint_list):
             rospy.loginfo(joint_name + '_position_controller/command')
-            self.publishers.append(rospy.Publisher(joint_name + '_position_controller/command', Float64, queue_size=1))
+            self.publishers.append(rospy.Publisher(robotName + '_' + joint_name + '_position_controller/command', Float64, queue_size=1))
 
         # initialize gui slide interface
         self.app = wx.App()
@@ -288,10 +289,13 @@ class JointStatePublisherGui(wx.Frame):
 
 if __name__ == '__main__':
     try:
-        rospy.init_node('hacked_joint_state_publisher')
-        jsp = JointStatePublisher()
+        rospy.init_node('hacked_joint_state_publisher', anonymous=True)
+        if len(sys.argv):
+            jsp = JointStatePublisher(sys.argv[1])
 
-        Thread(target=jsp.loop).start()
-        jsp.app.MainLoop()
+            Thread(target=jsp.loop).start()
+            jsp.app.MainLoop()
+        else:
+            print("Missing robot name")
 
     except rospy.ROSInterruptException: pass

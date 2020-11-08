@@ -11,13 +11,13 @@ import numpy as np
 from sensor_msgs.msg import LaserScan
 
 class laserScanner:
-    def __init__(self, pybullet, robot, **kargs):
+    def __init__(self, pybullet, robot, robotName, **kargs):
         # get "import pybullet as pb" and store in self.pb
         self.pb = pybullet
         # get robot from parent class
         self.robot = robot
         # laser params
-        laser_frame_id = rospy.get_param('~laser/frame_id', None) # laser reference frame, has to be an existing link
+        laser_frame_id = rospy.get_param('~{}_laser/frame_id'.format(robotName), None) # laser reference frame, has to be an existing link
         if not laser_frame_id:
             rospy.logerr('required parameter laser_frame_id not set, will exit now')
             rospy.signal_shutdown('required param laser_frame_id not set')
@@ -33,18 +33,18 @@ class laserScanner:
         # create laser msg placeholder for publication
         self.laser_msg = LaserScan()
         # laser field of view
-        angle_min = rospy.get_param('~laser/angle_min', -1.5707963)
-        angle_max = rospy.get_param('~laser/angle_max', 1.5707963)
+        angle_min = rospy.get_param('~{}_laser/angle_min'.format(robotName), -1.5707963)
+        angle_max = rospy.get_param('~{}_laser/angle_max'.format(robotName), 1.5707963)
         assert(angle_max > angle_min)
-        self.numRays = rospy.get_param('~laser/num_beams', 50) # should be 512 beams but simulation becomes slow
-        self.laser_msg.range_min = rospy.get_param('~laser/range_min', 0.03)
-        self.laser_msg.range_max = rospy.get_param('~laser/range_max', 5.6)
-        self.beam_visualisation = rospy.get_param('~laser/beam_visualisation', False)
+        self.numRays = rospy.get_param('~{}_laser/num_beams'.format(robotName), 50) # should be 512 beams but simulation becomes slow
+        self.laser_msg.range_min = rospy.get_param('~{}_laser/range_min'.format(robotName), 0.03)
+        self.laser_msg.range_max = rospy.get_param('~{}_laser/range_max'.format(robotName), 5.6)
+        self.beam_visualisation = rospy.get_param('~{}_laser/beam_visualisation'.format(robotName), False)
         self.laser_msg.angle_min = angle_min
         self.laser_msg.angle_max = angle_max
         self.laser_msg.angle_increment = (angle_max - angle_min) / self.numRays
         # register this node in the network as a publisher in /scan topic
-        self.pub_laser_scanner = rospy.Publisher('scan', LaserScan, queue_size=1)
+        self.pub_laser_scanner = rospy.Publisher('{}_scan'.format(robotName), LaserScan, queue_size=1)
         self.laser_msg.header.frame_id = laser_frame_id
         self.laser_msg.time_increment = 0.01 # ?
         self.laser_msg.scan_time = 0.1 # 10 hz
