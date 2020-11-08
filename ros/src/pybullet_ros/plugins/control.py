@@ -11,14 +11,14 @@ from std_msgs.msg import Float64
 
 class pveControl:
     """helper class to receive position, velocity or effort (pve) control commands"""
-    def __init__(self, joint_index, joint_name, controller_type):
+    def __init__(self, robotName, joint_index, joint_name, controller_type):
         """constructor
         joint_index - stores an integer joint identifier
         joint_name - string with the name of the joint as described in urdf model
         controller_type - position, velocity or effort
         """
         assert(controller_type in ['position', 'velocity', 'effort'])
-        rospy.Subscriber(joint_name + '_' + controller_type + '_controller/command',
+        rospy.Subscriber(robotName + '_' + joint_name + '_' + controller_type + '_controller/command',
                          Float64, self.pve_controlCB, queue_size=1)
         self.cmd = 0.0
         self.data_available = False
@@ -51,7 +51,7 @@ class pveControl:
 
 # plugin is implemented below
 class Control:
-    def __init__(self, pybullet, robot, **kargs):
+    def __init__(self, pybullet, robot, robotName, **kargs):
         # get "import pybullet as pb" and store in self.pb
         self.pb = pybullet
         # get robot from parent class
@@ -61,7 +61,7 @@ class Control:
         self.velocity_joint_commands = []
         self.effort_joint_commands = []
         # this parameter will be set for all robot joints
-        max_effort_vel_mode = rospy.get_param('~max_effort_vel_mode', 50.0)
+        max_effort_vel_mode = rospy.get_param('~{}_max_effort_vel_mode'.format(robotName), 50.0)
         # the max force to apply to the joint, used in velocity control
         self.force_commands = []
         # get joints names and store them in dictionary
@@ -82,11 +82,11 @@ class Control:
             # create list of joints for later use in pve_ctrl_cmd(...)
             self.joint_indices.append(joint_index)
             # create position control object
-            self.pc_subscribers.append(pveControl(joint_index, joint_name, 'position'))
+            self.pc_subscribers.append(pveControl(robotName, joint_index, joint_name, 'position'))
             # create position control object
-            self.vc_subscribers.append(pveControl(joint_index, joint_name, 'velocity'))
+            self.vc_subscribers.append(pveControl(robotName, joint_index, joint_name, 'velocity'))
             # create position control object
-            self.ec_subscribers.append(pveControl(joint_index, joint_name, 'effort'))
+            self.ec_subscribers.append(pveControl(robotName, joint_index, joint_name, 'effort'))
 
     def execute(self):
         """this function gets called from pybullet ros main update loop"""
