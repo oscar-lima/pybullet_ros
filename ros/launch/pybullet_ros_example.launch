@@ -6,7 +6,7 @@
     <!-- partial configuration params for pybullet_ros node, rest will be loaded from config_file -->
     <arg name="config_file" default="$(find pybullet_ros)/ros/config/pybullet_params_example.yaml" />
     <!--<arg name="environment" default="$(find mbot_simulation_environments)/worlds/isr-testbed.world" />-->
-    <arg name="pybullet_gui" default="True" /> <!-- if true pybullet gui will pop -->
+    <arg name="pybullet_gui" default="True" /> <!-- if true pybullet gui will show -->
     <arg name="robot_urdf_path" default="$(find pybullet_ros)/common/test/urdf/r2d2_robot/r2d2.urdf" />
     <arg name="pause_simulation" default="False" /> <!-- if true, will boot with paused physics -->
     <arg name="parallel_plugin_execution" default="True" />
