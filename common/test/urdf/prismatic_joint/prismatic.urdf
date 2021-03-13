@@ -1,0 +1,56 @@
+<?xml version="1.0" ?>
+<robot name="prismatic_joint_example">
+
+  <link name="parent">
+    <inertial>
+      <origin rpy="0 0 0" xyz="0 0 0"/>
+      <mass value="0.0"/>
+      <inertia ixx="0" ixy="0" ixz="0" iyy="0" iyz="0" izz="0"/>
+    </inertial>
+    <visual>
+      <origin rpy="0 0 0" xyz="0 0 0"/>
+      <geometry>
+        <box size="0.1 0.1 0.1"/>
+      </geometry>
+    </visual>
+    <collision>
+      <origin rpy="0 0 0" xyz="0 0 0"/>
+      <geometry>
+        <box size="0.1 0.1 0.1"/>
+      </geometry>
+    </collision>
+  </link>
+
+  <link name="child">
+    <inertial>
+      <origin rpy="0 0 0" xyz="0 0 0"/>
+      <mass value="1.0"/>
+      <inertia ixx="1" ixy="0" ixz="0" iyy="1" iyz="0" izz="1"/>
+    </inertial>
+    <visual>
+      <origin rpy="0 0 0" xyz="0 0 0"/>
+      <geometry>
+        <box size="0.1 0.1 0.1"/>
+      </geometry>
+    </visual>
+    <collision>
+      <origin rpy="0 0 0" xyz="0 0 0"/>
+      <geometry>
+        <box size="0.1 0.1 0.1"/>
+      </geometry>
+    </collision>
+  </link>
+
+  <joint name="parent_child_joint" type="prismatic">
+    <parent link="parent"/>
+    <child link="child"/>
+    <!-- think of this as a fixed joint (child starting point) -->
+    <origin xyz="0 0.5 0"/>
+    <!-- slide along y axis -->
+    <axis xyz="0 1 0"/>
+    <!-- w.r.t starting point how much is the child allowed to slide in meters -->
+    <!-- -0.39 explanation: leave 1cm gap between blocks when right block is at lower limit -->
+    <limit lower="-0.39" upper="0.5" effort="100.0" velocity="100.0" />
+  </joint>
+
+</robot>

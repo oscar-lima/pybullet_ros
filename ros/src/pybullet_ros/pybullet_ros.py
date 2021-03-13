@@ -39,7 +39,7 @@ class pyBulletRosWrapper(object):
         else:
             self.connected_to_physics_server = True
         # get all revolute joint names and pybullet index
-        rev_joint_index_name_dic, fixed_joint_index_name_dic, link_names_to_ids_dic = self.get_properties()
+        rev_joint_index_name_dic, prismatic_joint_index_name_dic, fixed_joint_index_name_dic, link_names_to_ids_dic = self.get_properties()
         # import plugins dynamically
         self.plugins = []
         dic = rospy.get_param('~plugins', {})
@@ -52,6 +52,7 @@ class pyBulletRosWrapper(object):
             # create object of the imported file class
             obj = getattr(importlib.import_module(key), dic[key])(self.pb, self.robot,
                           rev_joints=rev_joint_index_name_dic,
+                          prism_joints=prismatic_joint_index_name_dic,
                           fixed_joints=fixed_joint_index_name_dic,
                           link_ids=link_names_to_ids_dic)
             # store objects in member variable for future use
@@ -66,6 +67,7 @@ class pyBulletRosWrapper(object):
         """
         rev_joint_index_name_dic = {}
         fixed_joint_index_name_dic = {}
+        prismatic_joint_index_name_dic = {}
         link_names_to_ids_dic = {}
         for joint_index in range(0, self.pb.getNumJoints(self.robot)):
             info = self.pb.getJointInfo(self.robot, joint_index)
@@ -78,7 +80,9 @@ class pyBulletRosWrapper(object):
             elif info[2] == self.pb.JOINT_FIXED:
                 # insert key, value in dictionary (joint index, joint name)
                 fixed_joint_index_name_dic[joint_index] = info[1].decode('utf-8') # info[1] refers to joint name
-        return rev_joint_index_name_dic, fixed_joint_index_name_dic, link_names_to_ids_dic
+            elif info[2] == self.pb.JOINT_PRISMATIC:
+                prismatic_joint_index_name_dic[joint_index] = info[1].decode('utf-8') # info[1] refers to joint name
+        return rev_joint_index_name_dic, prismatic_joint_index_name_dic, fixed_joint_index_name_dic, link_names_to_ids_dic
 
     def handle_reset_simulation(self, req):
         """Callback to handle the service offered by this node to reset the simulation"""

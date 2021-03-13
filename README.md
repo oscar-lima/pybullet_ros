@@ -134,7 +134,9 @@ The following parameters can be used to customize the behavior of the simulator.
 
 ```~gravity``` - the desired value of gravity for your simulation physics engine, default : -9.81
 
-```~max_effort_vel_mode``` - the max effort (torque) to apply to the joint while in velocity control mode, default: 50.0
+```~max_effort``` - the max effort (torque) to apply to the joint while in position or velocity control mode, default: 100.0
+
+```~max_effort_vel_mode``` - deprecated parameter, use max_effort instead, backwards compatibility is provided, however please change your code soon
 
 ```~use_intertia_from_file``` - if True pybullet will compute the inertia tensor based on mass and volume of the collision shape, default: False
 
@@ -148,7 +150,7 @@ The following parameters can be used to customize the behavior of the simulator.
 
 ```~fixed_base``` - If true, the first link of the robot will be fixed to the center of the world, useful for non movable robots default: False
 
-NOTE: max_effort_vel_mode parameter is ignored when position or effort commands are given.
+NOTE: max_effort parameter is ignored when effort commands are given.
 
 Experimental (does not work at the moment) :
 

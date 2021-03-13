@@ -1,0 +1,14 @@
+# NOTE: Only certain parameters are exposed here, check sample launch files for the rest
+# Configuration parameters for R2D2 robot in pybullet ros simulator
+
+# pybullet plugins, will be loaded during runtime
+# control  - Position, velocity and effort control for all revolute joints on the robot
+plugins: {  pybullet_ros.plugins.control: Control}
+
+loop_rate:              80.0            # default: 80.0, the frequency at which to step sim in hz
+gravity:                -9.81           # default: -9.81, earth gravity in m/s^2
+max_effort:             100.0           # default: 100.0, the max force to apply to the model in pos and vel mode
+
+# True = allow pybullet to compute the inertia tensor based on mass and volume of the collision shape
+# False = you can provide a more accurate inertia tensor, so inertia will be read then from URDF model
+use_intertia_from_file: False           # default: False
