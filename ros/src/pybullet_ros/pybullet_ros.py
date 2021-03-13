@@ -4,7 +4,6 @@ import os
 import importlib
 import rospy
 import pybullet_data
-import pybullet_ros.sdf.sdf_parser as sdf_parser
 
 from std_srvs.srv import Empty
 from pybullet_ros.function_exec_manager import FuncExecManager
@@ -30,6 +29,9 @@ class pyBulletRosWrapper(object):
         rospy.Service('~unpause_physics', Empty, self.handle_unpause_physics)
         # get pybullet path in your system and store it internally for future use, e.g. to set floor
         self.pb.setAdditionalSearchPath(pybullet_data.getDataPath())
+        # create object of environment class for later use
+        env_plugin = rospy.get_param('~environment', 'environment') # default : plugins/environment.py
+        self.environment = getattr(importlib.import_module(f'pybullet_ros.plugins.{env_plugin}'), 'Environment')(self.pb)
         # load robot URDF model, set gravity, and ground plane
         self.robot = self.init_pybullet_robot()
         self.connected_to_physics_server = None
@@ -47,6 +49,7 @@ class pyBulletRosWrapper(object):
             rospy.logwarn('No plugins found, forgot to set param ~plugins?')
         # return to normal shell color
         print('\033[0m')
+        # load plugins
         for key in dic:
             rospy.loginfo('loading plugin: %s class from %s', dic[key], key)
             # create object of the imported file class
@@ -104,39 +107,8 @@ class pyBulletRosWrapper(object):
             rospy.loginfo('-------------------------')
             return self.pb.connect(self.pb.DIRECT)
 
-    #def load_environment(self):
-        #"""load world sdf files, (compliant with gazebo format)"""
-        ## make sure GAZEBO_MODEL_PATH is set
-        #if os.environ.get('GAZEBO_MODEL_PATH', None) == None:
-            ## suggested value: /usr/share/gazebo-9/models
-            #rospy.logwarn('GAZEBO_MODEL_PATH environment variable not set, models will not be able to load...')
-            ## continue blue console output
-            #print('\033[34m')
-        #world_path = rospy.get_param('~environment', None)
-        #if not world_path:
-            #rospy.logwarn('param environment not set, will run pybullet with empty world')
-            #return
-        #if not os.path.isfile(world_path):
-            #rospy.logwarn('file not found, world will not be loaded : ' + world_path)
-            ## continue blue console output
-            #print('\033[34m')
-        #else:
-            #rospy.loginfo('loading world : ' + world_path)
-            ## get all world models
-            #world = sdf_parser.SDF(file=world_path).world
-            #print('succesfully imported %d models'% len(world.models))
-            ## spawn sdf models in pybullet one at a time
-            #for model in world.models:
-                ## currently not sure how to set the required pose with loadSDF function...
-                #obj_pose = [float(x) for x in model.simple_pose.split() if not x.isalpha()]
-                #rospy.loginfo('loading model : ' + model.filename)
-                #try:
-                    #self.pb.loadSDF(model.filename)
-                #except:
-                    #rospy.logwarn('failed to load model : ' + model.filename + ', skipping...')
-
     def init_pybullet_robot(self):
-        """load robot URDF model, set gravity, and ground plane"""
+        """load robot URDF model, set gravity, ground plane and environment"""
         # get from param server the path to the URDF robot model to load at startup
         urdf_path = rospy.get_param('~robot_urdf_path', None)
         if urdf_path == None:
@@ -177,13 +149,9 @@ class pyBulletRosWrapper(object):
             urdf_flags = self.pb.URDF_USE_INERTIA_FROM_FILE | self.pb.URDF_USE_SELF_COLLISION
         else:
             urdf_flags = self.pb.URDF_USE_SELF_COLLISION
-        # set gravity
-        gravity = rospy.get_param('~gravity', -9.81) # get gravity from param server
-        self.pb.setGravity(0, 0, gravity)
-        # set floor
-        self.pb.loadURDF('plane.urdf')
         # load environment
-        #self.load_environment()
+        rospy.loginfo('loading environment')
+        self.environment.load_environment()
         # set no realtime simulation, NOTE: no need to stepSimulation if setRealTimeSimulation is set to 1
         self.pb.setRealTimeSimulation(0) # NOTE: does not currently work with effort controller, thats why is left as 0
         rospy.loginfo('loading urdf model: ' + urdf_path)
@@ -245,7 +213,7 @@ class pyBulletRosWrapper(object):
         """
         # create object of our parallel execution manager
         exec_manager_obj = FuncExecManager(self.plugins, rospy.is_shutdown, self.pb.stepSimulation, self.pause_simulation_function,
-                                           log_info=rospy.loginfo, log_warn=rospy.logwarn, log_debug=rospy.logdebug)
+                                    log_info=rospy.loginfo, log_warn=rospy.logwarn, log_debug=rospy.logdebug, function_name='plugin')
         # start parallel execution of all "execute" class methods in a synchronous way
         exec_manager_obj.start_synchronous_execution(loop_rate=self.loop_rate)
         # ctrl + c was pressed, exit

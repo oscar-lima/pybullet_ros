@@ -45,7 +45,8 @@ class FuncExecManager:
     """
     helper class to keep track of synchronous multiple parallel execution of functions with deadlines
     """
-    def __init__(self, list_of_objects, stop_condition, exec_after_each_loop, pause_execution, log_info=print, log_warn=print, log_debug=print):
+    def __init__(self, list_of_objects, stop_condition, exec_after_each_loop, pause_execution, log_info=print,
+                 log_warn=print, log_debug=print, function_name='function'):
         # deadline for functions to finish their process
         self.loop_rate = 0.25 # every 4 secs
         # keep track of functions which execution time is "below" the deadline (set by loop rate)
@@ -66,7 +67,7 @@ class FuncExecManager:
         # offer the user the possibility to pause the execution
         self.pause_execution = pause_execution
         # configure loggers
-        log_info('Started synchronous function execution manager')
+        log_info(f'Started synchronous {function_name} execution manager')
         self.log_warn = log_warn
         self.log_debug = log_debug
 

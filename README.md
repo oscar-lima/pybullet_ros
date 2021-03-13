@@ -122,23 +122,24 @@ pause or unpause physics, empty args, prevents the wrapper to call stepSimulatio
 
 The following parameters can be used to customize the behavior of the simulator.
 
-~ refers to the name of the node, e.g. pybullet_ros
+~ refers to the name of the node (because private nodehandle is used), e.g. pybullet_ros
 
 ```~loop_rate``` - Sleep to control the frequency of how often to call pybullet.stepSimulation(), default : 10.0 (hz)
 
-```~pybullet_gui``` - whether you want to visualize the simulation in a gui or not, default : True
+```~pybullet_gui``` - Whether you want to visualize the simulation in a gui or not, default : True
 
-```~robot_urdf_path``` - the path to load a robot at startup, default : None
+```~robot_urdf_path``` - The path to load a robot at startup, default : None
 
-```~pause_simulation``` - specify if simulation must start paused (true) or unpaused (false), default : False
+```~pause_simulation``` - Specify if simulation must start paused (true) or unpaused (false), default : False
 
-```~gravity``` - the desired value of gravity for your simulation physics engine, default : -9.81
+```~gravity``` - The desired value of gravity for your simulation physics engine, default : -9.81
 
-```~max_effort``` - the max effort (torque) to apply to the joint while in position or velocity control mode, default: 100.0
+```~max_effort``` - The max effort (torque) to apply to the joint while in position or velocity control mode, default: 100.0
+                    NOTE: max_effort parameter is ignored when effort commands are given.
 
-```~max_effort_vel_mode``` - deprecated parameter, use max_effort instead, backwards compatibility is provided, however please change your code soon
+```~max_effort_vel_mode``` - Deprecated parameter, use max_effort instead, backwards compatibility is provided, however please change your code asap
 
-```~use_intertia_from_file``` - if True pybullet will compute the inertia tensor based on mass and volume of the collision shape, default: False
+```~use_intertia_from_file``` - If True pybullet will compute the inertia tensor based on mass and volume of the collision shape, default: False
 
 ```~robot_pose_x``` - The position where to spawn the robot in the world in m, default: 0.0
 
@@ -150,11 +151,11 @@ The following parameters can be used to customize the behavior of the simulator.
 
 ```~fixed_base``` - If true, the first link of the robot will be fixed to the center of the world, useful for non movable robots default: False
 
-NOTE: max_effort parameter is ignored when effort commands are given.
+```~use_deformable_world``` - Set this paramter to true in case you require soft body simulation, default: False
 
-Experimental (does not work at the moment) :
-
-```~environment``` - (work in progress) Load a world file, which is a collection of sdf objects, default: Empty world
+```~environment``` - The name of the python file (has to be placed inside plugins folder) without the .py extension that implements the necessary
+                     custom functions to load an environment via python code, e.g using functions like self.pb.loadURDF(...)
+                     See "environment" section below for more details.
 
 # pybullet ros plugins
 
@@ -201,6 +202,22 @@ Extend "plugins" param to add yours, e.g:
 
 Using the pybullet [documentation](https://docs.google.com/document/d/10sXEhzFRSnvFcl3XxNGhnD4N2SedqwdAvK3dsihxVUA/edit#) you should be able
 to access all the functionality that the pybullet api provides.
+
+# Environment plugin
+
+To load an environment (URDF, SDF, etc) we provide with a particular one time plugin under "plugins/environment.py".
+
+This is loaded during runtime via importlib based upon the value of the ```~environment``` parameter.
+
+The recommended way is to set the "environment" parameter to point to a python file which has to be placed under "plugins" folder (just as any other plugin).
+
+Then set the environment parameter to be a string with the name of your python file, e.g. ```my_env.py``` but without the .py, therefore only : ```my_env```.
+
+Then inside my_env.py inherit from Environment class provided in plugins/environment.py and override the ```load_environment_via_code``` method.
+
+A template is provided under plugins/environment_template.py to ease the process.
+
+As mentioned before, the code inside the method "load_environment_via_code" will be called one time only during puybullet startup sequence.
 
 ## NOTE about the multiple r2d2 urdf models in the web
 
