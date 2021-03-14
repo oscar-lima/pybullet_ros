@@ -160,6 +160,9 @@ The following parameters can be used to customize the behavior of the simulator.
 ```~plugin_import_prefix``` - Allow environment plugins located in external packages to be recognized by pybullet ros. The line executed would look like this:
                               from my_external_ros_pkg.<my environment param (from above)> import Environment # default: pybullet_ros.plugins
 
+```~gui_options``` - Expose gui options to the user, for example to be able to maximize screen -> options="--width=2560 --height=1440".
+                    The line of code in pybullet for the presented example would look like this: ```physicsClient = p.connect(p.GUI, options="--width=2560 --height=1440")```
+
 # pybullet ros plugins
 
 What is a pybullet ros plugin?
@@ -192,7 +195,7 @@ Extend "plugins" param to add yours, e.g:
     plugins: {  pybullet_ros.plugins.body_vel_control: cmdVelCtrl,
                 pybullet_ros.plugins.odometry: simpleOdometry,
                 pybullet_ros.plugins.control: Control}
-    
+
     plugins: {  pybullet_ros.plugins.body_vel_control: cmdVelCtrl,
                 pybullet_ros.plugins.odometry: simpleOdometry,
                 pybullet_ros.plugins.control: Control,

@@ -18,6 +18,7 @@
     <arg name="robot_pose_yaw" default="0.0" />
     <arg name="fixed_base" default="False" />
     <arg name="use_deformable_world" default="False" /> <!-- enable/disable soft body simulation -->
+    <arg name="gui_options" default="" />
 
 
     <!-- upload urdf model to ROS param server -->
@@ -42,6 +43,7 @@
         <arg name="robot_pose_yaw" value="$(arg robot_pose_yaw)" />
         <arg name="fixed_base" value="$(arg fixed_base)" />
         <arg name="use_deformable_world" value="$(arg use_deformable_world)" />
+        <arg name="gui_options" value="$(arg gui_options)" />
     </include>
 
 </launch>

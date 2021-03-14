@@ -100,7 +100,8 @@ class pyBulletRosWrapper(object):
             # start simulation with gui
             rospy.loginfo('Running pybullet with gui')
             rospy.loginfo('-------------------------')
-            return self.pb.connect(self.pb.GUI)
+            gui_options = rospy.get_param('~gui_options', '') # e.g. to maximize screen: options="--width=2560 --height=1440"
+            return self.pb.connect(self.pb.GUI, options=gui_options)
         else:
             # start simulation without gui (non-graphical version)
             rospy.loginfo('Running pybullet without gui')
