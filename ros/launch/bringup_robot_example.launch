@@ -5,6 +5,8 @@
          It launches by default a sample R2D2 robot -->
 
     <arg name="config_file" default="$(find pybullet_ros)/ros/config/pybullet_params_example.yaml" />
+    <!-- e.g. from my_ros_pkg.my_env import Environment ; "my_env" is what you set in environment param below-->
+    <arg name="plugin_import_prefix" default="pybullet_ros.plugins" />
     <arg name="environment" default="environment" /> <!-- name of python file without the .py inside plugins folder -->
     <arg name="pybullet_gui" default="True" />
     <arg name="robot_urdf_path" default="$(find pybullet_ros)/common/test/urdf/r2d2_robot/r2d2.urdf.xacro" />
@@ -28,6 +30,7 @@
     <!-- pybullet ros wrapper -->
     <include file="$(find pybullet_ros)/ros/launch/pybullet_ros_example.launch" >
         <arg name="config_file" value="$(arg config_file)" />
+        <arg name="plugin_import_prefix" value="$(arg plugin_import_prefix)" />
         <arg name="environment" value="$(arg environment)" />
         <arg name="pybullet_gui" value="$(arg pybullet_gui)" />
         <arg name="robot_urdf_path" value="$(arg robot_urdf_path)" />

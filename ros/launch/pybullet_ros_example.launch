@@ -5,6 +5,7 @@
 
     <!-- partial configuration params for pybullet_ros node, rest will be loaded from config_file -->
     <arg name="config_file" default="$(find pybullet_ros)/ros/config/pybullet_params_example.yaml" />
+    <arg name="plugin_import_prefix" default="pybullet_ros.plugins" />
     <arg name="environment" default="environment" />
     <arg name="pybullet_gui" default="True" /> <!-- if true pybullet gui will show -->
     <arg name="robot_urdf_path" default="$(find pybullet_ros)/common/test/urdf/r2d2_robot/r2d2.urdf" />
@@ -20,6 +21,7 @@
     <!-- pybullet ros wrapper node -->
     <node pkg="pybullet_ros" type="pybullet_ros_node" name="pybullet_ros" output="screen" required="true" >
         <rosparam file="$(arg config_file)" command="load" />
+        <param name="plugin_import_prefix" value="$(arg plugin_import_prefix)" />
         <param name="environment" value="$(arg environment)" />
         <param name="pybullet_gui" value="$(arg pybullet_gui)" />
         <param name="robot_urdf_path" value="$(arg robot_urdf_path)" />

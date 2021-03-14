@@ -157,6 +157,9 @@ The following parameters can be used to customize the behavior of the simulator.
                      custom functions to load an environment via python code, e.g using functions like self.pb.loadURDF(...)
                      See "environment" section below for more details.
 
+```~plugin_import_prefix``` - Allow environment plugins located in external packages to be recognized by pybullet ros. The line executed would look like this:
+                              from my_external_ros_pkg.<my environment param (from above)> import Environment # default: pybullet_ros.plugins
+
 # pybullet ros plugins
 
 What is a pybullet ros plugin?

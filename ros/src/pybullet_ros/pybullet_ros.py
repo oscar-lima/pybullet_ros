@@ -31,7 +31,8 @@ class pyBulletRosWrapper(object):
         self.pb.setAdditionalSearchPath(pybullet_data.getDataPath())
         # create object of environment class for later use
         env_plugin = rospy.get_param('~environment', 'environment') # default : plugins/environment.py
-        self.environment = getattr(importlib.import_module(f'pybullet_ros.plugins.{env_plugin}'), 'Environment')(self.pb)
+        plugin_import_prefix = rospy.get_param('~plugin_import_prefix', 'pybullet_ros.plugins')
+        self.environment = getattr(importlib.import_module(f'{plugin_import_prefix}.{env_plugin}'), 'Environment')(self.pb)
         # load robot URDF model, set gravity, and ground plane
         self.robot = self.init_pybullet_robot()
         self.connected_to_physics_server = None
