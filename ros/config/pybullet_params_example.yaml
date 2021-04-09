@@ -8,12 +8,25 @@
 # control  - Position, velocity and effort control for all revolute joints on the robot
 # joint_state_pub - Query robot state and publish position, velocity and effort values to /joint_states
 # laser_scanner - Laser scanner simulation based on pybullet rayTestBatch function
-plugins: {  pybullet_ros.plugins.body_vel_control: cmdVelCtrl,
-            pybullet_ros.plugins.odometry: simpleOdometry,
-            pybullet_ros.plugins.control: Control,
-            pybullet_ros.plugins.joint_state_pub: joinStatePub,
-            pybullet_ros.plugins.laser_scanner: laserScanner,
-            pybullet_ros.plugins.rgbd_camera: RGBDCamera}
+plugins:
+  -
+    module: pybullet_ros.plugins.body_vel_control
+    class: cmdVelCtrl
+  -
+    module: pybullet_ros.plugins.odometry
+    class: simpleOdometry
+  -
+    module: pybullet_ros.plugins.control
+    class: Control
+  - 
+    module: pybullet_ros.plugins.joint_state_pub
+    class: joinStatePub
+  - 
+    module: pybullet_ros.plugins.laser_scanner
+    class: laserScanner
+  - 
+    module: pybullet_ros.plugins.rgbd_camera
+    class: RGBDCamera
 
 loop_rate:              80.0            # default: 80.0, the frequency at which to step sim in hz
 gravity:                -9.81           # default: -9.81, earth gravity in m/s^2
