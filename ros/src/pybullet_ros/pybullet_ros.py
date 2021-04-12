@@ -45,20 +45,24 @@ class pyBulletRosWrapper(object):
         rev_joint_index_name_dic, prismatic_joint_index_name_dic, fixed_joint_index_name_dic, link_names_to_ids_dic = self.get_properties()
         # import plugins dynamically
         self.plugins = []
-        dic = rospy.get_param('~plugins', {})
-        if not dic:
+        plugins = rospy.get_param('~plugins', [])
+        if not plugins:
             rospy.logwarn('No plugins found, forgot to set param ~plugins?')
         # return to normal shell color
         print('\033[0m')
         # load plugins
-        for key in dic:
-            rospy.loginfo('loading plugin: %s class from %s', dic[key], key)
+        for plugin in plugins:
+            module_ = plugin.pop("module")
+            class_ = plugin.pop("class")
+            params_ = plugin.copy()
+            rospy.loginfo('loading plugin: {} class from {}'.format(class_, module_))
             # create object of the imported file class
-            obj = getattr(importlib.import_module(key), dic[key])(self.pb, self.robot,
+            obj = getattr(importlib.import_module(module_), class_)(self.pb, self.robot,
                           rev_joints=rev_joint_index_name_dic,
                           prism_joints=prismatic_joint_index_name_dic,
                           fixed_joints=fixed_joint_index_name_dic,
-                          link_ids=link_names_to_ids_dic)
+                          link_ids=link_names_to_ids_dic,
+                          **params_)
             # store objects in member variable for future use
             self.plugins.append(obj)
         rospy.loginfo('pybullet ROS wrapper initialized')
