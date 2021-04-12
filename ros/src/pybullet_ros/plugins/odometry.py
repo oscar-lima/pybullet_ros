@@ -44,4 +44,5 @@ class simpleOdometry:
          self.odom_msg.twist.twist.angular.z] = self.pb.getBaseVelocity(self.robot)
         self.pub_odometry.publish(self.odom_msg)
         # tf broadcast (odom to base_link)
-        self.br.sendTransform(position, orientation, rospy.Time.now(), 'base_link', 'odom')
+        self.br.sendTransform(position, orientation, rospy.Time.now(), \
+            self.odom_msg.child_frame_id, self.odom_msg.header.frame_id)
