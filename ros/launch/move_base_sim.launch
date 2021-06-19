@@ -10,7 +10,7 @@
     <!-- This file is in /home/ros_user/catkin_ws/src/pybullet_ros/ros/src/pybullet_ros/plugins/ -->
     <arg name="environment" default="environment_CO25Lab" /> <!-- name of python file without the .py inside plugins folder -->
     <arg name="pybullet_gui" default="True" />
-    <arg name="robot_urdf_path" default="$(find pybullet_ros)/common/test/urdf/r2d2_robot/r2d2.urdf.xacro" />
+    <arg name="robot_urdf_path" default="$(find pybullet_ros)/common/test/urdf/r2d2_robot/r2d2_bottom_heavy.urdf.xacro" />
     <arg name="pause_simulation" default="False" />
     <arg name="parallel_plugin_execution" default="True" />
     <arg name="robot_pose_x" default="0.0" />

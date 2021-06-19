@@ -5,9 +5,9 @@
   <param name="robot_description" command="$(find xacro)/xacro '$(find pybullet_ros)/common/test/urdf/r2d2_robot/r2d2.urdf.xacro'"/>
 
   <!-- send fake joint values -->
-  <node name="joint_state_publisher" pkg="joint_state_publisher" type="joint_state_publisher">
+  <!-- <node name="joint_state_publisher" pkg="joint_state_publisher" type="joint_state_publisher">
     <param name="use_gui" value="False"/>
-  </node>
+  </node> -->
 
   <!-- Combine joint values -->
   <!-- <node name="robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher" output="screen">  

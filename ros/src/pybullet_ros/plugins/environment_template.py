@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 from pybullet_ros.plugins.environment import Environment as DefaultEnv
+import rospy
 
 class Environment(DefaultEnv):
     def __init__(self, pybullet, **kargs):

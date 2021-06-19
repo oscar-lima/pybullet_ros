@@ -20,5 +20,5 @@ class Environment(DefaultEnv):
         etc...
         """
 
-        self.pb.loadURDF('/home/ros_user/catkin_ws/src/pybullet_ros/common/test/urdf/worlds/brsu-c025-sim.urdf.xacro')
+        self.pb.loadURDF('/home/ros_user/catkin_ws/src/pybullet_ros/common/test/urdf/worlds/brsu-c025-sim.urdf')
         rospy.logwarn('loading CO25 Lab world via code!')
