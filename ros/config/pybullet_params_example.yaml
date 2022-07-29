@@ -27,6 +27,10 @@ plugins:
   - 
     module: pybullet_ros.plugins.rgbd_camera
     class: RGBDCamera
+  - 
+    module: pybullet_ros.plugins.diff_drive
+    class: DiffDrive
+    name: diff_drive_controller
 
 loop_rate:              80.0            # default: 80.0, the frequency at which to step sim in hz
 gravity:                -9.81           # default: -9.81, earth gravity in m/s^2
@@ -52,3 +56,12 @@ rgbd_camera:
     resolution:
         width:          640             # default: 640, horizontal image resolution in pixels
         height:         480             # default: 480, vertical image resolution in pixels
+
+diff_drive_controller:
+  left_joints:
+    - left_wheel_joint
+  right_joints:
+    - right_wheel_joint
+  wheel_separation: 1.0
+  wheel_radius: 1.0
+  cmd_vel: /cmd_vel
