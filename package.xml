@@ -1,19 +1,32 @@
 <?xml version="1.0"?>
-<package>
-    <name>pybullet_ros</name>
-    <version>2.0.0</version>
-    <description>
-        ROS wrapper for pybullet simulator
-    </description>
+<package format="3">
+  <name>pybullet_ros</name>
+  <version>2.0.0</version>
+  <description>ROS wrapper for pybullet simulator</description>
 
-    <license>MIT</license>
+  <maintainer email="oscar.lima@dfki.de">Oscar Lima</maintainer>
+  <author email="oscar.lima@dfki.de">Oscar Lima</author>
+  <license>MIT</license>
 
-    <author email="oscar.lima@dfki.de">Oscar Lima</author>
-    <maintainer email="oscar.lima@dfki.de">Oscar Lima</maintainer>
+  <buildtool_depend>ament_cmake</buildtool_depend>
+  <buildtool_depend>ament_cmake_python</buildtool_depend>
 
-    <buildtool_depend>catkin</buildtool_depend>
-    <run_depend>std_msgs</run_depend>
-    <run_depend>cv_bridge</run_depend>
-    <run_depend>joint_state_publisher_gui</run_depend>
+  <depend>ament_index_python</depend>
+  <depend>geometry_msgs</depend>
+  <depend>nav_msgs</depend>
+  <depend>rclpy</depend>
+  <depend>sensor_msgs</depend>
+  <depend>std_msgs</depend>
+  <depend>std_srvs</depend>
+  <depend>tf2_ros</depend>
+  <depend>cv_bridge</depend>
+  <depend>python3-yaml</depend>
+  <depend>xacro</depend>
 
+  <exec_depend>pybullet</exec_depend>
+  <exec_depend>pybullet_data</exec_depend>
+
+  <export>
+    <build_type>ament_cmake</build_type>
+  </export>
 </package>
